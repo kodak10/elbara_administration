@@ -47,7 +47,8 @@ class LivreurController extends Controller
         ]);
     
         // Générer un code unique pour le livreur
-        $livreurCode = 'LIV' . strtoupper(uniqid());
+        $livreurCode = 'LIV_' . strtoupper(substr(uniqid(), -4));
+
     
         // Créer un utilisateur avec un mot de passe par défaut
         $user = User::create([
