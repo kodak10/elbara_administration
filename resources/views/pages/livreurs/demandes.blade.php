@@ -54,7 +54,11 @@
                         <div class="dropdown">
                           <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">Actions</button>
                           <div class="dropdown-menu dropdown-menu-end">
-                            <a class="dropdown-item" href="#"> Approuver </a>
+                            <form action="{{ route('livreurs.approuver', $livreur->id) }}" method="POST">
+                              @csrf
+                              @method('PUT')
+                              <button type="submit" class="dropdown-item">Approuver</button>
+                          </form>
                             <a href="#" class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modal-motifRefus"> Refuser </a>
                           </div>
                         </div>

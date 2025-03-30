@@ -24,8 +24,8 @@ class DatabaseSeeder extends Seeder
             CompanyGareSeeder::class,
             RolesSeeder::class,
             UsersWithRolesSeeder::class,
-            LivreurSeeder::class,
             OrdersTableSeeder::class,
+            LivreurSeeder::class,
 
         ]);
 

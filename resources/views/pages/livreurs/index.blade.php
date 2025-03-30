@@ -23,7 +23,7 @@
                         <div class="card-body p-4 text-center">
                             <span class="avatar avatar-xl mb-3 rounded" style="background-image: url({{ asset('static/avatars/' . $livreur->avatar) }})"></span>
                             <h3 class="m-0 mb-1"><a href="#">{{ $livreur->prenom }} {{ $livreur->nom }}</a></h3>
-                            <div class="text-secondary">{{ $livreur->type }}</div>
+                            <div class="text-secondary">LIVREUR {{ $livreur->type }}</div>
                             <div class="mt-3">
                                 <span class="badge bg-purple-lt">{{ $livreur->code }}</span>
                             </div>

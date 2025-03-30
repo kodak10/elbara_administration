@@ -11,6 +11,7 @@ class Livreur extends Model
         'code', 
         'nom', 
         'prenoms', 
+        'type',
         'numero_telephone', 
         'lieu_residence', 
         'informations_complementaires', 

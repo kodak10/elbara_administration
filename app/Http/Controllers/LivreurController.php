@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DemandeLivreur;
 use App\Models\Livreur;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class LivreurController extends Controller
 {
@@ -14,8 +16,11 @@ class LivreurController extends Controller
     {
         // Récupérer les utilisateurs avec le rôle "livreur"
         $livreurs = Livreur::whereHas('user', function ($query) {
-            $query->role('livreur'); // Filtrer les utilisateurs ayant le rôle "livreur"
+            $query->whereHas('roles', function ($query) {
+                $query->where('name', 'livreur'); // Vérifie que l'utilisateur a le rôle 'livreur'
+            });
         })->get();
+        
 
         return view('pages.livreurs.index', compact('livreurs'));
     }
@@ -25,13 +30,59 @@ class LivreurController extends Controller
 
     public function demandes()
     {
-        $livreurs = Livreur::all();
+        $livreurs = DemandeLivreur::all();
         return view('pages.livreurs.demandes', compact('livreurs'));
     }
 
 
-    // Enregistre un nouveau livreur
-   
+    public function approuver($livreurId)
+{
+    
+
+    // Trouver la demande de livreur par ID
+    $demandeLivreur = DemandeLivreur::findOrFail($livreurId);
+    
+
+    // Vérifier si la demande a déjà été approuvée ou non
+    if ($demandeLivreur->approuve) {
+        return redirect()->back()->with('error', 'Cette demande a déjà été approuvée.');
+    }
+
+    // Mettre à jour le statut de la demande comme approuvée
+    $demandeLivreur->approuve = true;
+    $demandeLivreur->save();
+
+    // Créer un utilisateur avec un mot de passe par défaut
+    $user = User::create([
+        'name' => $demandeLivreur->prenoms . ' ' . $demandeLivreur->nom, // Nom complet
+        'email' => $demandeLivreur->email,  // Email de la demande
+        'password' => Hash::make('Elbara2025'),  // Mot de passe par défaut
+        'status' => 'actif',  // Status actif par défaut
+    ]);
+    
+    // Assigner le rôle "livreur" à l'utilisateur
+    $user->assignRole('livreur');
+    
+    // Créer un livreur dans la table `livreurs` avec les données de la demande
+    $livreur = Livreur::create([
+        'user_id' => $user->id,  // Lier le livreur à l'utilisateur créé
+        'code' => 'LIV_' . strtoupper(substr(preg_replace('/\D/', '', uniqid()), -4)),  // Code unique pour le livreur composé uniquement de chiffres
+        'nom' => $demandeLivreur->nom,
+        'prenoms' => $demandeLivreur->prenoms,
+        'numero_telephone' => $demandeLivreur->numero_telephone,
+        'lieu_residence' => $demandeLivreur->lieu_residence,
+        'informations_complementaires' => $demandeLivreur->informations_complementaires,
+        'type' => $demandeLivreur->type,  // Externe ou Interne
+        'status' => 'actif',  // Statut par défaut du livreur
+    ]);
+
+    // Supprimer la demande une fois qu'elle a été approuvée
+    $demandeLivreur->delete();
+    
+    // Retourner un message de succès
+    return redirect()->route('livreurs.demandes')->with('success', 'Le livreur a été créé avec succès et la demande a été supprimée.');
+}
+    
 
     public function store(Request $request)
     {
@@ -47,7 +98,7 @@ class LivreurController extends Controller
         ]);
     
         // Générer un code unique pour le livreur
-        $livreurCode = 'LIV_' . strtoupper(substr(uniqid(), -4));
+         $livreurCode = 'LIV_' . strtoupper(substr(preg_replace('/\D/', '', uniqid()), -4));  // Code unique pour le livreur composé uniquement de chiffres
 
     
         // Créer un utilisateur avec un mot de passe par défaut
@@ -63,8 +114,10 @@ class LivreurController extends Controller
     
         // Créer le livreur
         $livreur = Livreur::create([
+            'user_id' => $user->id,
             'code' => $livreurCode,
             'nom' => $request->nom,
+            'type' => $request->type,
             'prenoms' => $request->prenoms,
             'numero_telephone' => $request->numero_telephone,
             'lieu_residence' => $request->lieu_residence,
@@ -115,13 +168,14 @@ class LivreurController extends Controller
        // Trouver l'utilisateur par son ID
         $user = User::findOrFail($userId);
 
+        
         // Vérifier si l'utilisateur a un livreur associé
         $livreur = $user->livreur;
 
-        if ($livreur) {
+        if ($user) {
             // Inverser le statut du livreur
-            $livreur->status = $livreur->status == 'actif' ? 'inactif' : 'actif';
-            $livreur->save();
+            $user->status = $user->status == 'actif' ? 'inactif' : 'actif';
+            $user->save();
         }
 
         // Rediriger vers la page précédente avec un message de succès

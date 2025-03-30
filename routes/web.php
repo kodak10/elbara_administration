@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\GareController;
 use App\Http\Controllers\LivreurController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -28,10 +30,16 @@ Route::get('/commandes/{id}', [OrderController::class, 'show'])->name('orders.sh
 Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name('orders.assign');
 Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
+Route::put('/livreurs/{livreur}/approuver', [LivreurController::class, 'approuver'])->name('livreurs.approuver');
+
 Route::get('/livreurs/demandes', [LivreurController::class, 'demandes'])->name('livreurs.demandes');
 Route::get('/livreurs/{id}/toggle-status', [LivreurController::class, 'updateStatus'])->name('livreurs.toggleStatus');
 
+Route::get('/livreurs/financier', [FinanceController::class, 'pointLivreur'])->name('livreurs.financier');
+
+
 Route::resource('livreurs', LivreurController::class);
+
 
 
 Route::resource('companies', CompanyController::class);
