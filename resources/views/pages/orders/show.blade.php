@@ -5,7 +5,7 @@
     <div class="container-xl">
         <div class="row g-2 align-items-center">
             <div class="col">
-                <h2 class="page-title">Détails de la Commande #{{ $order->id }}</h2>
+                <h2 class="page-title">Détails de la Commande #{{ $order->reference_commande }}</h2>
             </div>
         </div>
     </div>
@@ -29,10 +29,11 @@
                             </div>
                             <div class="col-md-6">
                                 <h5>Informations sur la Commande</h5>
-                                <p><strong>Libellé : </strong>{{ $order->libelle }}</p>
                                 <p><strong>Montant : </strong>{{ number_format($order->montant, 2, ',', ' ') }} FCFA</p>
+                                <p><strong>Mode de paiement </strong>{{ $order->mode_payment }}</p>
+                                <p><strong>Payer Par: </strong></p>
                                 <p><strong>Date de la commande : </strong>{{ $order->date }}</p>
-                                <p><strong>Status : </strong>
+                                <p><strong>Status de la commande : </strong>
                                     <span class="badge 
                                         @if($order->status_orders == 'En attente') bg-warning 
                                         @elseif($order->status_orders == 'Acceptée') bg-primary 
@@ -44,6 +45,8 @@
                                         {{ $order->status_orders }}
                                     </span>
                                 </p>
+                                <p><strong>Status paiement : </strong>
+
                             </div>
                         </div>
                         
@@ -53,7 +56,7 @@
                         <p><strong>Départ : </strong>{{ $order->depart_adresse }}</p>
                         <p><strong>Destination : </strong>{{ $order->destination_adresse }}</p>
                         <p><strong>Type de véhicule : </strong>{{ $order->engin }}</p>
-                        <p><strong>Instructions : </strong>{{ $order->instructions ?? 'Aucune' }}</p>
+                        <p><strong>Instructions : </strong>{{ $order->libelle ?? 'Aucune' }}</p>
 
                         <hr>
 
@@ -70,10 +73,8 @@
                             </ul>
                         @endif
 
-                        
-                        <hr>
-
                         @if($order->livreur_id)
+                        
                         <h5>Informations du Livreur</h5>
                         <p><strong>Nom du Livreur : </strong>{{ $order->livreur->name ?? 'Non affecté' }}</p>
                         <p><strong>Status Livreur : </strong>{{ $order->status_livreur ?? 'Non renseigné' }}</p>

@@ -43,7 +43,7 @@
                                                 <option value="">-- Tous --</option>
                                                 <option value="Moto" @if(request('engin') == 'Moto') selected @endif>Moto</option>
                                                 <option value="Camion" @if(request('engin') == 'Camion') selected @endif>Camion</option>
-                                                <option value="Trycicle" @if(request('engin') == 'Trycicle') selected @endif>Trycicle</option>
+                                                <option value="Tricycle" @if(request('engin') == 'Tricycle') selected @endif>Tricycle</option>
                                             </select>
                                         </div>
                                         <div class="col-md-3">

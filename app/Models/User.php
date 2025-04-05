@@ -6,13 +6,25 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;  
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use  HasApiTokens, HasFactory, Notifiable, HasRoles;
 
+
+    public function createApiToken()
+    {
+        $token = Str::random(60);
+        
+        $this->api_token = hash('sha256', $token);
+        $this->save();
+
+        return $token;
+    }
     /**
      * The attributes that are mass assignable.
      *
@@ -25,6 +37,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone_number', 
         'status', 
     ];
+
+    
 
     /**
      * The attributes that should be hidden for serialization.

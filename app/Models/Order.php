@@ -9,13 +9,48 @@ class Order extends Model
 {
     use HasFactory;
 
+    use HasFactory;
+
     protected $fillable = [
-        'user_id', 'livreur_id', 'depart_long', 'depart_lat', 'destination_long', 'destination_lat',
-        'depart_adresse', 'destination_adresse', 'numero_destinateur', 'numero_destinataire', 'libelle',
-        'montant', 'distance_km', 'duree_minutes', 'reference_commande', 'date', 'engin', 'type_course', 
-        'status_orders', 'status_payment', 'mode_payment', 'transaction_id', 'date_paiement', 'instructions',
-        'status_livreur', 'notation', 'historique_statut'
+        'user_id',
+        'depart_lat',
+        'depart_long',
+        'destination_lat',
+        'destination_long',
+        'depart_adresse',
+        'destination_adresse',
+        'numero_destinateur',
+        'numero_destinataire',
+        'libelle',
+        'montant',
+        'distance_km',
+        'reference_commande',
+        'date',
+        'engin',
+        'type_course',
+        'status_orders',
+        'status_payment',
+        'mode_payment',
+        'instructions',
+        'livreur_id',
+        'admin_id',
+        'notation',
+        'historique_statut'
     ];
+
+    protected $casts = [
+        'historique_statut' => 'array',
+        'date' => 'date',
+    ];
+
+
+    // protected $fillable = [
+    //     'user_id', 'livreur_id', 'depart_long', 'depart_lat', 'destination_long', 'destination_lat',
+    //     'depart_adresse', 'destination_adresse', 'numero_destinateur', 'numero_destinataire', 'libelle',
+    //     'montant', 'distance_km', 'duree_minutes', 'reference_commande', 'date', 'engin', 'type_course', 
+    //     'status_orders', 'status_payment', 'mode_payment', 'transaction_id', 'date_paiement', 'instructions',
+    //     'status_livreur', 'notation', 'historique_statut'
+    // ];
 
     // Assure-toi que 'date' est traité comme une instance de Carbon
     protected $dates = ['date']; // Cela indique à Laravel que 'date' est une date

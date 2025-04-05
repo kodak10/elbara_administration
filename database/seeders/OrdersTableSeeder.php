@@ -33,7 +33,7 @@ class OrdersTableSeeder extends Seeder
                 'duree_minutes' => $faker->numberBetween(10, 120),
                 'reference_commande' => strtoupper(Str::random(10)),
                 'date' => $faker->date,
-                'engin' => $faker->randomElement(['Moto', 'Camion', 'Trycicle']),
+                'engin' => $faker->randomElement(['Moto', 'Camion', 'Tricycle']),
                 'type_course' => $faker->randomElement(['Course', 'Livraison']),
                 'status_orders' => $faker->randomElement(['En attente', 'Acceptée', 'En cours', 'Livrée', 'Annulée', 'Échouée']),
                 'status_payment' => $faker->randomElement(['Non payé', 'Payé']),

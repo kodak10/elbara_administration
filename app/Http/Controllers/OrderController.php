@@ -10,11 +10,11 @@ class OrderController extends Controller
 {
     public function index(Request $request)
 {
-    // $livreurs = User::whereHas('roles', function($query) {
-    //     $query->where('name', 'livreur');  // Vérifier si l'utilisateur a le rôle 'livreur'
-    // })->get();
+    $livreurs = User::whereHas('roles', function($query) {
+        $query->where('name', 'livreur');  
+    })->get();
 
-    $livreurs = User::get();
+    //$livreurs = User::get();
     
     $orders = Order::query();
 

@@ -19,13 +19,13 @@ class DatabaseSeeder extends Seeder
        
 
         $this->call([
-            CompanySeeder::class,
-            GareSeeder::class,
-            CompanyGareSeeder::class,
+            //CompanySeeder::class,
+            //GareSeeder::class,
+            //CompanyGareSeeder::class,
             RolesSeeder::class,
             UsersWithRolesSeeder::class,
-            OrdersTableSeeder::class,
-            LivreurSeeder::class,
+            //OrdersTableSeeder::class,
+            //LivreurSeeder::class,
 
         ]);
 
