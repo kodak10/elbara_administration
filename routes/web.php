@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinanceController;
@@ -51,6 +52,8 @@ Route::get('/utilisateurs/{id}/toggle-status', [UserController::class, 'updateSt
 
 Route::get('/profil', [UserController::class, 'profil'])->name('profil.edit');
 Route::post('/profil', [UserController::class, 'updateProfile'])->name('profil.update');
+
+Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
 
 
 

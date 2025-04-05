@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions; // Utilisation de LogOptions au lieu de ActivitylogOptions
+use Spatie\Activitylog\LogOptions; 
 
 class User extends Authenticatable implements MustVerifyEmail
 {

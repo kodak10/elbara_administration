@@ -15,12 +15,19 @@ return new class extends Migration
             $table->id();
             $table->string('log_name')->nullable();
             $table->text('description')->nullable();
-            $table->text('properties');
-            $table->uuid('batch_uuid')->nullable();
-            $table->string('event');
-            $table->morphs('subject');
+            $table->text('event')->nullable(); // Le type d'événement (created, updated, deleted, etc.)
+            $table->text('properties')->nullable(); // Informations détaillées sur le changement
+            $table->uuid('batch_uuid')->nullable(); // Pour grouper des logs
+        
+            // Clé étrangère vers l'entité qui a causé l'activité (ex: User)
+            $table->nullableMorphs('causer');
+        
+            // Clé étrangère vers l'entité concernée (ex: User, Order)
+            $table->nullableMorphs('subject');
+        
             $table->timestamps();
         });
+        
     }
 
     /**
