@@ -72,12 +72,58 @@
                                       <span class="dropdown">
                                           <button class="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                                           <div class="dropdown-menu dropdown-menu-end">
-                                              <a class="dropdown-item" href="{{ route('orders.show', $order->id) }}">Voir</a>
-                                              <a class="dropdown-item" href="#">Affecter un Livreur</a>
-                                              <a class="dropdown-item" href="#">Annuler</a>
-                                          </div>
+                                            <!-- Voir les détails de la commande -->
+                                            <a class="dropdown-item" href="{{ route('orders.show', $order->id) }}">Voir</a>
+                                            
+                                            <!-- Affecter un livreur -->
+                                            <form action="{{ route('orders.assign', $order->id) }}" method="POST">
+                                                @csrf
+                                                <a class="dropdown-item" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#assignLivreurModal{{ $order->id }}">
+                                                    Affecter un Livreur
+                                                </a>
+                                            </form>
+                                            
+                                            <!-- Annuler la commande -->
+                                            <form action="{{ route('orders.cancel', $order->id) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH') <!-- Méthode PATCH pour mise à jour -->
+                                                <a class="dropdown-item" href="javascript:void(0)" onclick="this.closest('form').submit();">
+                                                    Annuler
+                                                </a>
+                                            </form>
+                                        </div>
                                       </span>
                                   </td>
+
+                                  <!-- Modal pour affecter un livreur -->
+                                    <div class="modal fade" id="assignLivreurModal{{ $order->id }}" tabindex="-1" aria-labelledby="assignLivreurModalLabel{{ $order->id }}" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title" id="assignLivreurModalLabel{{ $order->id }}">Affecter un Livreur</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form action="{{ route('orders.assign', $order->id) }}" method="POST">
+                                                        @csrf
+                                                        <div class="mb-3">
+                                                            <label for="livreur_id" class="form-label">Sélectionner un Livreur</label>
+                                                            <select name="livreur_id" id="livreur_id" class="form-control" required>
+                                                                <option value="">-- Choisir un livreur --</option>
+                                                                @foreach($livreurs as $livreur)
+                                                                    <option value="{{ $livreur->id }}">{{ $livreur->name }}</option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                            <button type="submit" class="btn btn-primary">Affecter</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                               </tr>
                               @endforeach
                           </tbody>

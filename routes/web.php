@@ -32,6 +32,7 @@ Route::post('/orders/{order}/assign', [OrderController::class, 'assign'])->name(
 Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
 Route::put('/livreurs/{livreur}/approuver', [LivreurController::class, 'approuver'])->name('livreurs.approuver');
+Route::post('/livreur/{id}/refuser', [LivreurController::class, 'refuser'])->name('livreurs.refuser');
 
 Route::get('/livreurs/demandes', [LivreurController::class, 'demandes'])->name('livreurs.demandes');
 Route::get('/livreurs/{id}/toggle-status', [LivreurController::class, 'updateStatus'])->name('livreurs.toggleStatus');

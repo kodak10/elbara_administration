@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('prenoms');
             $table->string('numero_telephone');
             $table->string('lieu_residence')->nullable();
+            $table->string('message')->nullable();
             $table->timestamps();
         });
     }

@@ -4,12 +4,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use App\Models\Traits\ActivityLogger;
 
 class Order extends Model
 {
-    use HasFactory;
-
-    use HasFactory;
+    use HasFactory, ActivityLogger;
 
     protected $fillable = [
         'user_id',
@@ -42,15 +41,6 @@ class Order extends Model
         'historique_statut' => 'array',
         'date' => 'date',
     ];
-
-
-    // protected $fillable = [
-    //     'user_id', 'livreur_id', 'depart_long', 'depart_lat', 'destination_long', 'destination_lat',
-    //     'depart_adresse', 'destination_adresse', 'numero_destinateur', 'numero_destinataire', 'libelle',
-    //     'montant', 'distance_km', 'duree_minutes', 'reference_commande', 'date', 'engin', 'type_course', 
-    //     'status_orders', 'status_payment', 'mode_payment', 'transaction_id', 'date_paiement', 'instructions',
-    //     'status_livreur', 'notation', 'historique_statut'
-    // ];
 
     // Assure-toi que 'date' est traité comme une instance de Carbon
     protected $dates = ['date']; // Cela indique à Laravel que 'date' est une date

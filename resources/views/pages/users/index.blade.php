@@ -64,87 +64,89 @@
 </div>
 
 <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-      <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title">Création d'utilisateur</h5>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-              <!-- Form for creating a user -->
-              <form method="POST" action="{{ route('utilisateurs.store') }}">
-                  @csrf
-                  <!-- Affichage des erreurs globales -->
-                  @if ($errors->any())
-                      <div class="alert alert-danger">
-                          <ul>
-                              @foreach ($errors->all() as $error)
-                                  <li>{{ $error }}</li>
-                              @endforeach
-                          </ul>
-                      </div>
-                  @endif
-                  <div class="row">
-                      <div class="col-lg-6">
-                          <div class="mb-3">
-                              <label class="form-label">Role</label>
-                              <select class="form-select @error('role') is-invalid @enderror" name="role" required>
-                                  <option value="SuperAdmin">SuperAdmin</option>
-                                  <option value="Admin">Admin</option>
-                                  <option value="Manager">Manager</option>
-                              </select>
-                              @error('role')
-                                  <div class="invalid-feedback">{{ $message }}</div>
-                              @enderror
-                          </div>
-                      </div>
-                      <div class="col-lg-6">
-                          <div class="mb-3">
-                              <label class="form-label">Nom</label>
-                              <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Nom de l'utilisateur" value="{{ old('name') }}" required>
-                              @error('name')
-                                  <div class="invalid-feedback">{{ $message }}</div>
-                              @enderror
-                          </div>
-                      </div>
-                  </div>
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Création d'utilisateur</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Form for creating a user -->
+                <form method="POST" action="{{ route('utilisateurs.store') }}">
+                    @csrf
+                    <!-- Affichage des erreurs globales -->
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Role</label>
+                                <select class="form-select @error('role') is-invalid @enderror" name="role" required>
+                                    <option value="SuperAdmin" {{ old('role') == 'SuperAdmin' ? 'selected' : '' }}>SuperAdmin</option>
+                                    <option value="Admin" {{ old('role') == 'Admin' ? 'selected' : '' }}>Admin</option>
+                                    <option value="Manager" {{ old('role') == 'Manager' ? 'selected' : '' }}>Manager</option>
+                                </select>
+                                @error('role')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nom</label>
+                                <input type="text" class="form-control @error('name') is-invalid @enderror" name="name" placeholder="Nom de l'utilisateur" value="{{ old('name') }}" required>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
 
-                  <div class="row">
-                      <div class="col-lg-6">
-                          <div class="mb-3">
-                              <label class="form-label">Email</label>
-                              <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required>
-                              @error('email')
-                                  <div class="invalid-feedback">{{ $message }}</div>
-                              @enderror
-                          </div>
-                      </div>
-                      <div class="col-lg-6">
-                          <div class="mb-3">
-                              <label class="form-label">Contact</label>
-                              <input type="text" class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number') }}" required>
-                              @error('phone_number')
-                                  <div class="invalid-feedback">{{ $message }}</div>
-                              @enderror
-                          </div>
-                      </div>
-                  </div>
-          </div>
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ old('email') }}" required>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Contact</label>
+                                <input type="text" class="form-control @error('phone_number') is-invalid @enderror" name="phone_number" value="{{ old('phone_number') }}" required>
+                                @error('phone_number')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                    </div>
 
-          <div class="modal-footer">
-              <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> Annuler </a>
-              <button type="submit" class="btn btn-primary btn-5 ms-auto">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
-                      <path d="M12 5l0 14"></path>
-                      <path d="M5 12l14 0"></path>
-                  </svg>
-                  Ajouter
-              </button>
-          </div>
-          </form>
-      </div>
-  </div>
+            </div>
+
+            <div class="modal-footer">
+                <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> Annuler </a>
+                <button type="submit" class="btn btn-primary btn-5 ms-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewbox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-2">
+                        <path d="M12 5l0 14"></path>
+                        <path d="M5 12l14 0"></path>
+                    </svg>
+                    Ajouter
+                </button>
+            </div>
+            </form>
+        </div>
+    </div>
 </div>
+
 
 
 @endsection

@@ -34,6 +34,23 @@ class LivreurController extends Controller
         return view('pages.livreurs.demandes', compact('livreurs'));
     }
 
+    public function refuser($id, Request $request)
+{
+    $livreur = DemandeLivreur::findOrFail($id);
+
+    // Validation du motif de refus
+    $validated = $request->validate([
+        'message' => 'required|max:15',
+    ]);
+
+    // Mise à jour du statut du livreur et enregistrement du motif
+    $livreur->approuve = 0;
+    $livreur->message = $validated['message'];
+    $livreur->save();
+
+    // Rediriger avec un message de succès
+    return redirect()->route('livreurs.index')->with('success', 'Livreur refusé avec succès.');
+}
 
     public function approuver($livreurId)
 {
@@ -90,7 +107,7 @@ class LivreurController extends Controller
         $request->validate([
             'nom' => 'required|string|max:255',
             'prenoms' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
+            //'email' => 'required|email|unique:users,email',
             'numero_telephone' => 'required|string|max:15',
             'lieu_residence' => 'required|string|max:255',
             'a_moto' => 'required|boolean',

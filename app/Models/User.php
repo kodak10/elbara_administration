@@ -8,44 +8,29 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
-use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions; 
+use App\Models\Traits\ActivityLogger;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use LogsActivity, HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use ActivityLogger, HasApiTokens, HasFactory, Notifiable, HasRoles; 
 
-    // Vous pouvez définir vos attributs à logger directement ici
-    protected static $logAttributes = ['name', 'email', 'updated_at'];
-
-    // Optionnel : cette méthode permet de personnaliser l'enregistrement des actions
-    protected static $logName = 'user';
-
-    // Personnalisation de la description des événements
+    // Personnalisation de la description des événements (optionnel, si vous souhaitez une logique plus spécifique)
     public function getDescriptionForEvent(string $eventName): string
-{
-    switch ($eventName) {
-        case 'created':
-            return "{$this->name} a été créé";
-        case 'updated':
-            return "{$this->name} a été mis à jour";
-        case 'deleted':
-            return "{$this->name} a été supprimé";
-        case 'restored':
-            return "{$this->name} a été restauré";
-        case 'forceDeleted':
-            return "{$this->name} a été définitivement supprimé";
-        default:
-            return "{$this->name} a effectué une action sur l'utilisateur.";
-    }
-}
-
-    // Modification de la méthode pour utiliser LogOptions
-    public function getActivitylogOptions(): LogOptions
     {
-        return LogOptions::defaults() // Utilisez LogOptions::defaults() pour obtenir l'option par défaut
-            ->logOnly(['name', 'email']); // Par exemple, on log uniquement le nom et l'email
+        switch ($eventName) {
+            case 'created':
+                return "{$this->name} a été créé";
+            case 'updated':
+                return "{$this->name} a été mis à jour";
+            case 'deleted':
+                return "{$this->name} a été supprimé";
+            case 'restored':
+                return "{$this->name} a été restauré";
+            case 'forceDeleted':
+                return "{$this->name} a été définitivement supprimé";
+            default:
+                return "{$this->name} a effectué une action sur l'utilisateur.";
+        }
     }
 
     public function createApiToken()

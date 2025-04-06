@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\ActivityLogger;
 
 class Livreur extends Model
 {
+    use ActivityLogger;
     protected $fillable = [
         'user_id', // Ajout de l'ID utilisateur
         'code', 

@@ -37,7 +37,7 @@ return new class extends Migration
             $table->timestamp('date_paiement')->nullable();
             $table->text('instructions')->nullable();
             $table->enum('status_livreur', ['En route', 'Arrivé', 'Livré', 'En attente'])->nullable();
-            $table->foreignId('livreur_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->foreignId('livreur_id')->nullable()->constrained('livreurs')->onDelete('set null');
             $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null');
             $table->tinyInteger('notation')->nullable();
             $table->json('historique_statut')->nullable();

@@ -4,17 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\ActivityLogger; 
 
 class DemandeLivreur extends Model
 {
-    use HasFactory;
+    use HasFactory, ActivityLogger;
 
     protected $fillable = [
         'nom',
         'prenoms',
         'numero_telephone',
         'lieu_residence',
-        'a_moto'
+        'a_moto',
+        'message',
     ];
 
     public function livreur()

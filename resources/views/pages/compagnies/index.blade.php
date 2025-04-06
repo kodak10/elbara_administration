@@ -63,6 +63,7 @@
 </div>
 
 <!-- Modal de création de compagnie -->
+<!-- Modal de création de compagnie -->
 <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -73,30 +74,60 @@
             <div class="modal-body">
                 <form action="{{ route('companies.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+
+                    <!-- Afficher les messages d'erreur pour l'ensemble du formulaire -->
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="mb-3">
                         <label class="form-label">Nom</label>
-                        <input type="text" class="form-control" name="name" placeholder="Nom de la Compagnie" required>
+                        <input type="text" class="form-control" name="name" placeholder="Nom de la Compagnie" value="{{ old('name') }}" required>
+                        <!-- Affichage du message d'erreur spécifique pour le nom -->
+                        @error('name')
+                            <div class="text-danger">{{ $message }}</div>
+                        @enderror
                     </div>
+
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
+                                <input type="email" class="form-control" name="email" value="{{ old('email') }}" required>
+                                <!-- Affichage du message d'erreur spécifique pour l'email -->
+                                @error('email')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Logo</label>
                                 <input type="file" class="form-control" name="logo">
+                                <!-- Affichage du message d'erreur spécifique pour le logo -->
+                                @error('logo')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-12">
                             <div>
                                 <label class="form-label">Informations Complémentaires</label>
-                                <textarea class="form-control" name="additional_info" rows="3"></textarea>
+                                <textarea class="form-control" name="additional_info" rows="3">{{ old('additional_info') }}</textarea>
+                                <!-- Affichage du message d'erreur spécifique pour additional_info -->
+                                @error('additional_info')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
+
                     <div class="modal-footer">
                         <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal">Annuler</a>
                         <button type="submit" class="btn btn-primary btn-5 ms-auto">Ajouter</button>
@@ -106,6 +137,7 @@
         </div>
     </div>
 </div>
+
 
 
 <!-- Modal de confirmation de suppression -->
@@ -132,12 +164,16 @@
                 <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">Annuler</a>
               </div>
               <div class="col">
-                <!-- Formulaire de suppression -->
-                <form id="delete-form" action="{{ route('companies.destroy', $company->id) }}" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-4 w-100">Supprimer</button>
-                </form>
+                @if(isset($companies) && $companies->isNotEmpty())
+                    <!-- Formulaire de suppression -->
+                    <form id="delete-form" action="{{ route('companies.destroy', $company->id) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-4 w-100">Supprimer</button>
+                    </form>
+                @endif
+                 
+               
               </div>
             </div>
           </div>

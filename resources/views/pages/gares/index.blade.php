@@ -67,6 +67,7 @@
 </div>
 
 <!-- Modale pour Ajouter une Gare -->
+<!-- Modal de création de Gare -->
 <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
         <div class="modal-content">
@@ -77,21 +78,44 @@
             <div class="modal-body">
                 <form action="{{ route('gares.store') }}" method="POST">
                     @csrf
+                    
+                    <!-- Affichage des messages d'erreur globaux -->
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
                     <div class="row">
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Compagnies</label>
                                 <select name="compagnie_ids[]" class="form-select" multiple required>
                                     @foreach($compagnies as $compagnie)
-                                        <option value="{{ $compagnie->id }}">{{ $compagnie->name }}</option>
+                                        <option value="{{ $compagnie->id }}" 
+                                            @if(in_array($compagnie->id, old('compagnie_ids', []))) selected @endif>
+                                            {{ $compagnie->name }}
+                                        </option>
                                     @endforeach
                                 </select>
+                                <!-- Affichage des erreurs pour compagnie_ids -->
+                                @error('compagnie_ids')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Nom de Gare</label>
-                                <input type="text" class="form-control" name="name" placeholder="Nom de la Gare" required>
+                                <input type="text" class="form-control" name="nom" placeholder="Nom de la Gare" value="{{ old('nom') }}" required>
+                                <!-- Affichage des erreurs pour name -->
+                                @error('nom')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -100,25 +124,41 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Contact 01</label>
-                                <input type="text" class="form-control" name="contact_01" required>
+                                <input type="text" class="form-control" name="contact_01" value="{{ old('contact_01') }}" required>
+                                <!-- Affichage des erreurs pour contact_01 -->
+                                @error('contact_01')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Contact 02</label>
-                                <input type="text" class="form-control" name="contact_02">
+                                <input type="text" class="form-control" name="contact_02" value="{{ old('contact_02') }}">
+                                <!-- Affichage des erreurs pour contact_02 -->
+                                @error('contact_02')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-4">
                             <div class="mb-3">
                                 <label class="form-label">Localisation</label>
-                                <input type="text" class="form-control" name="localisation" required>
+                                <input type="text" class="form-control" name="localisation" value="{{ old('localisation') }}" required>
+                                <!-- Affichage des erreurs pour localisation -->
+                                @error('localisation')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                         <div class="col-lg-8">
                             <div>
                                 <label class="form-label">Informations Complémentaires</label>
-                                <textarea class="form-control" name="informations_complementaires" rows="3"></textarea>
+                                <textarea class="form-control" name="informations_complementaires" rows="3">{{ old('informations_complementaires') }}</textarea>
+                                <!-- Affichage des erreurs pour informations_complementaires -->
+                                @error('informations_complementaires')
+                                    <div class="text-danger">{{ $message }}</div>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -132,6 +172,7 @@
         </div>
     </div>
 </div>
+
 
 <!-- Modal de confirmation de suppression -->
 
@@ -158,12 +199,17 @@
                 <a href="#" class="btn btn-3 w-100" data-bs-dismiss="modal">Annuler</a>
               </div>
               <div class="col">
-                <!-- Formulaire de suppression -->
-                <form id="delete-form" action="{{ route('gares.destroy', $gare->id) }}" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger btn-4 w-100">Supprimer</button>
-                </form>
+
+                @if(isset($gare) && $gare != null)
+                    <!-- Formulaire de suppression -->
+                    <form id="delete-form" action="{{ route('gares.destroy', $gare->id) }}" method="POST" style="display: inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger btn-4 w-100">Supprimer</button>
+                    </form>
+                @endif
+
+               
               </div>
             </div>
           </div>

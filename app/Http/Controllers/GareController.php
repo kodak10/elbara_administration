@@ -20,6 +20,8 @@ class GareController extends Controller
 
     public function store(Request $request)
     {
+        //dd($request);
+
         // Validation des données
         $request->validate([
             'nom' => 'required|string|max:255',
@@ -29,6 +31,7 @@ class GareController extends Controller
             'informations_complementaires' => 'nullable|string',
             'compagnie_ids' => 'required|array'
         ]);
+
 
         // Créer une nouvelle gare
         $gare = Gare::create([

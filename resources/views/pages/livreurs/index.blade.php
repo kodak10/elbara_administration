@@ -57,7 +57,7 @@
         </div>
 
         <!-- Pagination -->
-        <div class="d-flex mt-4">
+        {{-- <div class="d-flex mt-4">
             <ul class="pagination ms-auto">
                 <li class="page-item disabled">
                     <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
@@ -83,7 +83,7 @@
                     </a>
                 </li>
             </ul>
-        </div>
+        </div> --}}
     </div>
 </div>
 
