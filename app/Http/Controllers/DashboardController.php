@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Livreur;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,9 +11,14 @@ class DashboardController extends Controller
 {
     public function index()
 {
-    $livreurs = User::whereHas('roles', function($query) {
-        $query->where('name', 'livreur');  
+    // $livreurs = Livreur::whereHas('roles', function($query) {
+    //     $query->where('name', 'livreur');  
+    // })->get();
+
+    $livreurs = Livreur::whereHas('user.roles', function($query) {
+        $query->where('name', 'livreur');
     })->get();
+    
 
     // Récupérer les commandes en cours / en attente
     $orders = Order::whereIn('status_orders', ['En cours', 'En attente'])->get();

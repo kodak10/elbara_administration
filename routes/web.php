@@ -10,10 +10,6 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-
-
-
-
 Route::get('/', function () {
     return view('pages.login');
 });

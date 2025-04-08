@@ -61,7 +61,7 @@ class Order extends Model
     // Relation avec User (le livreur)
     public function livreur()
     {
-        return $this->belongsTo(User::class, 'livreur_id');
+        return $this->belongsTo(Livreur::class, 'livreur_id');
     }
 
     // Optionnel: Si tu as un modèle Admin pour la gestion

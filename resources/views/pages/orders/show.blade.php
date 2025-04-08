@@ -76,7 +76,7 @@
                         @if($order->livreur_id)
                         
                         <h5>Informations du Livreur</h5>
-                        <p><strong>Nom du Livreur : </strong>{{ $order->livreur->name ?? 'Non affecté' }}</p>
+                        <p><strong>Nom du Livreur : </strong>{{ $order->livreur->nom }} {{ $order->livreur->prenoms }}</p>
                         <p><strong>Status Livreur : </strong>{{ $order->status_livreur ?? 'Non renseigné' }}</p>
                         @endif
                     </div>

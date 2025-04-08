@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Livreur;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -10,9 +11,13 @@ class OrderController extends Controller
 {
     public function index(Request $request)
 {
-    $livreurs = User::whereHas('roles', function($query) {
-        $query->where('name', 'livreur');  
+    // $livreurs = Livreur::whereHas('roles', function($query) {
+    //     $query->where('name', 'livreur');  
+    // })->get();
+    $livreurs = Livreur::whereHas('user.roles', function($query) {
+        $query->where('name', 'livreur');
     })->get();
+    
 
     //$livreurs = User::get();
     
@@ -61,17 +66,28 @@ class OrderController extends Controller
     }
 
     public function assign(Request $request, $id)
-    {
-        // Trouver la commande par ID
-        $order = Order::findOrFail($id);
-
-        // Affecter le livreur sélectionné à la commande
-        $order->livreur_id = $request->livreur_id;
-        $order->save();
-
-        // Rediriger avec un message de succès
-        return redirect()->route('orders.index')->with('success', 'Livreur affecté avec succès');
+{
+    // Vérifier si le livreur existe dans la table 'livreurs'
+    $livreur = Livreur::find($request->livreur_id);
+    
+    if (!$livreur) {
+        dd($livreur);
+        return redirect()->route('orders.index')->with('error', 'Le livreur sélectionné n\'existe pas.');
     }
+
+    // Trouver la commande par ID
+    $order = Order::findOrFail($id);
+
+    // Affecter le livreur sélectionné à la commande
+    $order->livreur_id = $request->livreur_id;
+    $order->status_livreur = "En attente";
+
+    $order->save();
+
+    // Rediriger avec un message de succès
+    return redirect()->route('orders.index')->with('success', 'Livreur affecté avec succès');
+}
+
 
     public function cancel($id)
     {

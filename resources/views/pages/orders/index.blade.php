@@ -131,7 +131,7 @@
                                                                 <select name="livreur_id" id="livreur_id" class="form-control" required>
                                                                     <option value="">-- Choisir un livreur --</option>
                                                                     @foreach($livreurs as $livreur)
-                                                                        <option value="{{ $livreur->id }}">{{ $livreur->name }}</option>
+                                                                        <option value="{{ $livreur->id }}">{{ $livreur->nom }} {{ $livreur->prenoms }}</option>
                                                                     @endforeach
                                                                 </select>
                                                             </div>
