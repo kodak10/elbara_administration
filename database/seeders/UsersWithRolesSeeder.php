@@ -44,38 +44,7 @@ class UsersWithRolesSeeder extends Seeder
                 'status' => 'actif',
                 'role' => 'manager',
             ],
-            [
-                'name' => 'Livreur User 1',
-                'email' => 'livreur1@example.com',
-                'password' => 'Elbara2025',
-                'phone_number' => '0123456789',
-                'status' => 'actif',
-                'role' => 'livreur',
-            ],
-            [
-                'name' => 'Livreur User 2',
-                'email' => 'livreur2@example.com',
-                'password' => 'Elbara2025',
-                'phone_number' => '0123456789',
-                'status' => 'actif',
-                'role' => 'livreur',
-            ],
-            [
-                'name' => 'Regular User 1',
-                'email' => 'user1@example.com',
-                'password' => 'Elbara2025',
-                'phone_number' => '0123456789',
-                'status' => 'inactif',
-                'role' => 'user',
-            ],
-            [
-                'name' => 'Regular User 2',
-                'email' => 'user2@example.com',
-                'password' => 'Elbara2025',
-                'phone_number' => '0123456789',
-                'status' => 'inactif',
-                'role' => 'user',
-            ]
+           
         ];
 
         // Créer les utilisateurs et leur assigner des rôles

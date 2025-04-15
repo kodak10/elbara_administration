@@ -66,7 +66,7 @@
                                   <td>{{ \Carbon\Carbon::parse($order->date)->format('d M Y') }}</td>
 
                                   <td><span class="badge bg-{{ $order->status_orders == 'En cours' ? 'success' : ($order->status_orders == 'En attente' ? 'warning' : 'danger') }} me-1"></span> {{ $order->status_orders }}</td>
-                                  <td>{{ $order->montant }} €</td>
+                                  <td>{{ $order->montant }}</td>
                                   <td>{{ $order->mode_payment }}</td>
                                   <td class="text-end">
                                       <span class="dropdown">

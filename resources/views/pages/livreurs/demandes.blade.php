@@ -65,6 +65,36 @@
                                     </div>
                                 </td>
                             </tr>
+                            {{-- Modal de refus --}}
+                            <div class="modal modal-blur fade" id="modal-motifRefus" tabindex="-1" role="dialog" aria-hidden="true">
+                                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                    <h5 class="modal-title">Motif de refus</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                    <form id="refuserForm" method="POST" action="{{ route('livreurs.refuser', $livreur->id) }}" class="d-flex flex-column">
+                                        @csrf
+                                        <div class="col-lg-12">
+                                        <label class="form-label">Motif (maximum 200 caractères)</label>
+                                        <textarea id="message" name="message" class="form-control @error('message') is-invalid @enderror" rows="3" maxlength="200">{{ old('message') }}</textarea>
+                                        
+                                        {{-- Affichage des erreurs pour le champ message --}}
+                                        @error('message')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        </div>
+                                    </form>
+                                    </div>
+                                    <div class="modal-footer">
+                                    <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> Annuler </a>
+                                    {{-- Déplacement du bouton "Refuser" à l'intérieur du formulaire --}}
+                                    <button type="submit" class="btn btn-primary btn-5 ms-auto" form="refuserForm">Refuser</button>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
                             @endforeach
                         </tbody>
                     </table>
@@ -74,36 +104,7 @@
     </div>
 </div>
 
-{{-- Modal de refus --}}
-<div class="modal modal-blur fade" id="modal-motifRefus" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title">Motif de refus</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <form id="refuserForm" method="POST" action="{{ route('livreurs.refuser', $livreur->id) }}" class="d-flex flex-column">
-          @csrf
-          <div class="col-lg-12">
-            <label class="form-label">Motif (maximum 200 caractères)</label>
-            <textarea id="message" name="message" class="form-control @error('message') is-invalid @enderror" rows="3" maxlength="200">{{ old('message') }}</textarea>
-            
-            {{-- Affichage des erreurs pour le champ message --}}
-            @error('message')
-              <div class="invalid-feedback">{{ $message }}</div>
-            @enderror
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal"> Annuler </a>
-        {{-- Déplacement du bouton "Refuser" à l'intérieur du formulaire --}}
-        <button type="submit" class="btn btn-primary btn-5 ms-auto" form="refuserForm">Refuser</button>
-      </div>
-    </div>
-  </div>
-</div>
+
 
 
 

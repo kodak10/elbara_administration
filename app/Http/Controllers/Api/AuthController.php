@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
@@ -58,26 +60,30 @@ class AuthController extends Controller
     {
         Log::channel('auth')->info('Début enregistrement utilisateur', [
             'phone' => $request->phone,
-            'name' => $request->name
+            'name' => $request->name,
+            'email' => $request->email // Ajout du log pour l'email
         ]);
 
         try {
-            $request->validate([
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
                 'phone' => 'required|string|max:20|unique:users,phone_number',
-                'name' => 'required|string|max:255'
+                'email' => 'required|string|email|max:255|unique:users,email'
             ]);
 
             $user = User::create([
-                'name' => $request->name,
-                'phone_number' => $request->phone,
-                'password' => Hash::make($request->phone),
+                'name' => $validated['name'],
+                'phone_number' => $validated['phone'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['phone']), // Utilisation du phone comme mot de passe par défaut
                 'api_token' => null,
             ]);
 
             Log::channel('auth')->info('Utilisateur créé', ['user_id' => $user->id]);
 
+            // Assignation du rôle user avec Spatie
             $user->assignRole('user');
-            Log::channel('auth')->info('Rôle attribué', ['user_id' => $user->id]);
+            Log::channel('auth')->info('Rôle user attribué', ['user_id' => $user->id]);
 
             return response()->json([
                 'success' => true,
@@ -85,22 +91,24 @@ class AuthController extends Controller
                     'id' => $user->id,
                     'name' => $user->name,
                     'phone_number' => $user->phone_number,
+                    'email' => $user->email,
                     'roles' => $user->getRoleNames(),
-                    'permissions' => $user->getAllPermissions()->pluck('name'),
                 ],
-                'message' => 'Registration successful'
-            ]);
+                'token' => $user->createToken('auth_token')->plainTextToken,
+                'message' => 'Inscription réussie'
+            ], 201);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             Log::channel('auth')->error('Erreur validation inscription', [
                 'errors' => $e->errors(),
                 'data' => $request->all()
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
+                'message' => 'Erreur de validation',
                 'errors' => $e->errors()
             ], 422);
+            
         } catch (\Exception $e) {
             Log::channel('auth')->error('Erreur inscription', [
                 'error' => $e->getMessage(),
@@ -109,71 +117,191 @@ class AuthController extends Controller
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Registration failed'
+                'message' => 'Erreur lors de l\'inscription'
             ], 500);
         }
     }
 
-    public function verifyOtp(Request $request)
+    public function sendOtp(Request $request)
     {
+        // Validation
+        $validator = Validator::make($request->all(), [
+            'phone' => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
         try {
-            $request->validate([
-                'phone' => 'required|string|max:20',
-                'otp' => 'required|string|size:6'
+            // Générer un OTP (exemple: 6 chiffres)
+            $otp = "123456";
+
+            // Ici vous devriez implémenter l'envoi réel (SMS, email, etc.)
+            // Pour le moment on log juste pour le débogage
+            Log::channel('auth')->info('OTP généré', [
+                'phone' => $request->phone,
+                'otp' => $otp
             ]);
-
-            Log::channel('auth')->debug('OTP reçu', ['otp' => $request->otp]);
-
-            if ($request->otp !== '123456') {
-                Log::channel('auth')->warning('OTP invalide', [
-                    'phone' => $request->phone,
-                    'otp_reçu' => $request->otp
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Code OTP invalide'
-                ], 401);
-            }
-
-            $user = User::where('phone_number', $request->phone)->first();
-
-            if (!$user) {
-                Log::channel('auth')->error('Utilisateur non trouvé pour OTP', [
-                    'phone' => $request->phone
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'User not found'
-                ], 404);
-            }
-
-            $token = $user->createToken('auth_token')->plainTextToken;
 
             return response()->json([
                 'success' => true,
-                'token' => $token,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'phone_number' => $user->phone_number,
-                    'roles' => $user->getRoleNames(), // Spatie
-                    'permissions' => $user->getPermissionNames(), // Spatie
-                ],
-                'message' => 'Connexion réussie'
+                'message' => 'OTP envoyé avec succès',
+                'otp' => $otp // À retirer en production!
             ]);
 
         } catch (\Exception $e) {
-            Log::channel('auth')->error('Erreur vérification OTP', [
+            Log::channel('auth')->error('Erreur sendOtp', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'data' => $request->all()
+                'trace' => $e->getTraceAsString()
             ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur de vérification'
+                'message' => 'Erreur lors de l\'envoi de l\'OTP'
             ], 500);
         }
     }
+
+//     public function verifyOtp(Request $request)
+// {
+//     // Validation des données
+//     $validator = Validator::make($request->all(), [
+//         'phone' => 'required|string|max:20',
+//         'otp' => 'required|string|size:6' // Supposant un OTP de 6 chiffres
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Validation error',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         // ICI - Implémentez votre logique de vérification réelle
+//         // Ceci est un exemple basique - À adapter selon votre système
+        
+//         // En développement, vous pourriez comparer avec l'OTP généré précédemment
+//         // En production, utilisez un service de vérification d'OTP
+        
+//         $isOtpValid = true; // Remplacez par votre logique de validation
+        
+//         if ($isOtpValid) {
+//             // Trouver ou créer l'utilisateur
+//             $user = User::firstOrCreate(
+//                 ['phone' => $request->phone],
+//                 ['password' => Hash::make($request->phone)] // Mot de passe par défaut
+//             );
+
+//             // Créer un token d'authentification
+//             $token = $user->createToken('auth_token')->plainTextToken;
+
+//             return response()->json([
+//                 'success' => true,
+//                 'message' => 'OTP vérifié avec succès',
+//                 'user' => $user,
+//                 'token' => $token
+//             ]);
+//         }
+
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'OTP invalide'
+//         ], 401);
+
+//     } catch (\Exception $e) {
+//         Log::channel('auth')->error('Erreur verifyOtp', [
+//             'error' => $e->getMessage(),
+//             'trace' => $e->getTraceAsString()
+//         ]);
+        
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Erreur lors de la vérification'
+//         ], 500);
+//     }
+// }
+public function verifyOtp(Request $request)
+{
+    Log::info('[verifyOtp] Requête reçue', $request->all());
+
+    // Validation des données
+    $validator = Validator::make($request->all(), [
+        'phone' => 'required|string|max:20',
+        'otp' => 'required|string|size:6' // Supposant un OTP de 6 chiffres
+    ]);
+
+    if ($validator->fails()) {
+        Log::warning('[verifyOtp] Échec de validation', [
+            'errors' => $validator->errors()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation error',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        Log::debug('[verifyOtp] Début de vérification OTP', [
+            'phone' => $request->phone,
+            'otp' => $request->otp
+        ]);
+
+        // 💡 À remplacer par votre vraie logique de vérification d'OTP
+        $isOtpValid = true;
+
+        if ($isOtpValid) {
+            $user = User::firstOrCreate(
+                ['name' => "kodak"],
+                ['phone_number' => $request->phone],
+                ['password' => Hash::make($request->phone)] // Mot de passe par défaut
+            );
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            Log::info('[verifyOtp] OTP valide - Utilisateur connecté', [
+                'user_id' => $user->id,
+                'phone' => $user->phone
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'OTP vérifié avec succès',
+                'user' => $user,
+                'token' => $token
+            ]);
+        }
+
+        Log::warning('[verifyOtp] OTP invalide', [
+            'phone' => $request->phone,
+            'otp_reçu' => $request->otp
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'OTP invalide'
+        ], 401);
+
+    } catch (\Exception $e) {
+        Log::error('[verifyOtp] Erreur lors de la vérification', [
+            'exception' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la vérification'
+        ], 500);
+    }
+}
 
 
     public function getUser(Request $request)
@@ -196,19 +324,19 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request)
-    {
-        $user = $request->user();
-        Log::channel('auth')->info('Déconnexion utilisateur', [
-            'user_id' => $user->id,
-            'phone' => $user->phone_number,
-        ]);
+    // public function logout(Request $request)
+    // {
+    //     $user = $request->user();
+    //     Log::channel('auth')->info('Déconnexion utilisateur', [
+    //         'user_id' => $user->id,
+    //         'phone' => $user->phone_number,
+    //     ]);
 
-        $user->currentAccessToken()->delete();
+    //     $user->currentAccessToken()->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Déconnexion réussie'
-        ]);
-    }
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Déconnexion réussie'
+    //     ]);
+    // }
 }
