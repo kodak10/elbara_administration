@@ -9,10 +9,11 @@ use Illuminate\Support\Str;
 use Spatie\Permission\Traits\HasRoles;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Traits\ActivityLogger;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use ActivityLogger, HasApiTokens, HasFactory, Notifiable, HasRoles; 
+    use ActivityLogger, HasApiTokens, HasFactory, Notifiable, HasRoles, SoftDeletes; 
 
     // Personnalisation de la description des événements (optionnel, si vous souhaitez une logique plus spécifique)
     public function getDescriptionForEvent(string $eventName): string
@@ -78,4 +79,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasOne(Livreur::class);
     }
+
+    protected $dates = ['deleted_at'];
+
 }

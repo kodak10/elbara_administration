@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\OrderController;
 
     // Authentification
     Route::post('/check-phone', [AuthController::class, 'checkPhone']);
+
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
@@ -25,7 +26,10 @@ use App\Http\Controllers\Api\OrderController;
     Route::get('/{user_id}/orders', [OrderController::class, 'getUserOrders']);
     Route::get('/order/{orderId}', [OrderController::class, 'getOrderDetails']);
 
+    Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
+
 // Routes protégées par auth:sanctum
 Route::middleware('auth:sanctum')->group(function () {
     // Routes nécessitant une authentification
 });
+

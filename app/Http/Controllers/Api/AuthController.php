@@ -14,47 +14,43 @@ use Spatie\Permission\Models\Role;
 class AuthController extends Controller
 {
     public function checkPhone(Request $request)
-    {
-        Log::channel('auth')->info('Début vérification numéro', ['phone' => $request->phone]);
+{
+    Log::info('🔍 Début de la vérification du numéro de téléphone', [
+        'données_reçues' => $request->all()
+    ]);
 
-        try {
-            $request->validate(['phone' => 'required|string|max:20']);
+    $request->validate([
+        'phone' => 'required|string|min:8|max:15',
+    ]);
 
-            $exists = User::where('phone_number', $request->phone)->exists();
+    $phone = $request->phone;
+    Log::info('📞 Numéro reçu après validation : ' . $phone);
 
-            Log::channel('auth')->info('Résultat vérification numéro', [
-                'phone' => $request->phone,
-                'exists' => $exists
-            ]);
+    // Vérification du format du numéro
+    if (!preg_match('/^[0-9]{8,15}$/', $phone)) {
+        Log::warning('❌ Format de numéro invalide', [
+            'phone' => $phone
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'exists' => $exists,
-                'message' => $exists ? 'User exists' : 'New user'
-            ]);
-
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::channel('auth')->error('Erreur validation numéro', [
-                'error' => $e->errors(),
-                'phone' => $request->phone
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid phone format',
-                'errors' => $e->errors()
-            ], 422);
-        } catch (\Exception $e) {
-            Log::channel('auth')->error('Erreur vérification numéro', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'phone' => $request->phone
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error'
-            ], 500);
-        }
+        return response()->json([
+            'success' => false,
+            'message' => 'Format de numéro invalide',
+        ], 400);
     }
+
+    // Vérifier si le numéro existe en base
+    $userExists = User::where('phone_number', $phone)->exists();
+    Log::info('✅ Vérification existence : ', [
+        'phone' => $phone,
+        'exists' => $userExists
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Numéro vérifié',
+        'exists' => $userExists, // 👈 correspond à ce que ton code Flutter attend
+    ], 200);
+}
 
     public function register(Request $request)
     {
@@ -259,11 +255,23 @@ public function verifyOtp(Request $request)
         $isOtpValid = true;
 
         if ($isOtpValid) {
-            $user = User::firstOrCreate(
-                ['name' => "kodak"],
-                ['phone_number' => $request->phone],
-                ['password' => Hash::make($request->phone)] // Mot de passe par défaut
-            );
+            
+
+            $user = User::withTrashed()->where('phone_number', $request->phone)->first();
+
+            if ($user && $user->trashed()) {
+                $user->restore();
+                Log::info("Utilisateur restauré (soft deleted) ID: {$user->id}");
+            } elseif (!$user) {
+                $user = User::create([
+                    'name' => 'kodak',
+                    'phone_number' => $request->phone,
+                    'password' => Hash::make($request->phone),
+                ]);
+                Log::info("Nouvel utilisateur créé ID: {$user->id}");
+            }
+
+            
 
             $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -324,19 +332,32 @@ public function verifyOtp(Request $request)
         ]);
     }
 
-    // public function logout(Request $request)
-    // {
-    //     $user = $request->user();
-    //     Log::channel('auth')->info('Déconnexion utilisateur', [
-    //         'user_id' => $user->id,
-    //         'phone' => $user->phone_number,
-    //     ]);
-
-    //     $user->currentAccessToken()->delete();
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Déconnexion réussie'
-    //     ]);
-    // }
+    public function deleteAccount(Request $request)
+    {
+        $user = $request->user();
+    
+        Log::info("Demande de suppression du compte reçue pour l'utilisateur ID: {$user->id}");
+    
+        try {
+            // Soft delete
+            $user->delete(); // Si vous utilisez SoftDeletes
+            Log::info("Utilisateur ID: {$user->id} supprimé (soft delete)");
+    
+            // Suppression des tokens (déconnexion)
+            $user->tokens()->delete();
+            Log::info("Tokens de l'utilisateur ID: {$user->id} supprimés");
+    
+            return response()->json([
+                'success' => true,
+                'message' => 'Compte supprimé avec succès'
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de la suppression du compte utilisateur ID: {$user->id} - " . $e->getMessage());
+    
+            return response()->json([
+                'success' => false,
+                'message' => 'Une erreur est survenue lors de la suppression du compte'
+            ], 500);
+        }
+    }
 }
