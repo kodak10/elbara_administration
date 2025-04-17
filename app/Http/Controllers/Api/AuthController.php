@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\OtpCode;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -13,65 +16,122 @@ use Spatie\Permission\Models\Role;
 
 class AuthController extends Controller
 {
-    public function checkPhone(Request $request)
+
+    private function sendSms($phone, $message)
 {
-    Log::info('🔍 Début de la vérification du numéro de téléphone', [
-        'données_reçues' => $request->all()
-    ]);
+    $apiKey = 'paoFFVLaaLRmSPXmVKPHmSFPA8LGVPjg';
+    $apiToken = 'KiuI1743759041';
+    $senderId = 'OTP Auth';
 
-    $request->validate([
-        'phone' => 'required|string|min:8|max:15',
-    ]);
+    $url = "https://panel.smsing.app/smsAPI?sendsms" .
+           "&apikey=" . urlencode($apiKey) .
+           "&apitoken=" . urlencode($apiToken) .
+           "&type=sms" .
+           "&from=" . urlencode($senderId) .
+           "&to=" . urlencode($phone) .
+           "&text=" . urlencode($message);
 
-    $phone = $request->phone;
-    Log::info('📞 Numéro reçu après validation : ' . $phone);
+    try {
+        $response = Http::timeout(30)->get($url);
+        
+        if ($response->failed()) {
+            throw new \Exception("Erreur HTTP: " . $response->status());
+        }
 
-    // Vérification du format du numéro
-    if (!preg_match('/^[0-9]{8,15}$/', $phone)) {
-        Log::warning('❌ Format de numéro invalide', [
-            'phone' => $phone
+        $result = $response->json();
+
+        if (!isset($result['status'])) {
+            throw new \Exception("Réponse API invalide");
+        }
+
+        if ($result['status'] === 'queued') {
+            return [
+                'success' => true,
+                'message' => 'SMS envoyé avec succès',
+                'group_id' => $result['group_id']
+            ];
+        }
+
+        $errorMessage = $result['message'] ?? 'Erreur inconnue de l\'API SMS';
+        throw new \Exception($errorMessage);
+
+    } catch (\Exception $e) {
+        return [
+            'success' => false,
+            'message' => 'Erreur d\'envoi SMS: ' . $e->getMessage()
+        ];
+    }
+}
+
+private function normalizePhoneNumber($phone)
+{
+    // Supprimer tous les caractères non numériques
+    $cleaned = preg_replace('/[^0-9]/', '', $phone);
+
+    // Si le numéro commence par 0, le convertir en format international (pour Côte d'Ivoire)
+    if (preg_match('/^0/', $cleaned)) {
+        return '225' . substr($cleaned, 1);
+    }
+
+    // Si le numéro n'a pas de préfixe pays, ajouter 225 (code Côte d'Ivoire)
+    if (!preg_match('/^\+?\d{1,3}/', $cleaned)) {
+        return '225' . $cleaned;
+    }
+
+    // Retirer le + s'il existe
+    return ltrim($cleaned, '+');
+}
+
+
+    public function checkPhone(Request $request)
+    {
+        Log::info('🔍 Début de la vérification du numéro de téléphone', [
+            'données_reçues' => $request->all()
+        ]);
+
+        $request->validate([
+            'phone' => 'required|string|min:8|max:10',
+        ]);
+
+        //$phone = $request->phone;
+        $phone = '225' . $request->phone;
+
+        Log::info('📞 Numéro reçu après validation : ' . $phone);
+
+
+        $userExists = User::where('phone_number', $phone)->exists();
+        Log::info('✅ Vérification existence : ', [
+            'phone' => $phone,
+            'exists' => $userExists
         ]);
 
         return response()->json([
-            'success' => false,
-            'message' => 'Format de numéro invalide',
-        ], 400);
+            'success' => true,
+            'message' => 'Numéro vérifié',
+            'exists' => $userExists,
+        ], 200);
     }
-
-    // Vérifier si le numéro existe en base
-    $userExists = User::where('phone_number', $phone)->exists();
-    Log::info('✅ Vérification existence : ', [
-        'phone' => $phone,
-        'exists' => $userExists
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Numéro vérifié',
-        'exists' => $userExists, // 👈 correspond à ce que ton code Flutter attend
-    ], 200);
-}
 
     public function register(Request $request)
     {
         Log::channel('auth')->info('Début enregistrement utilisateur', [
             'phone' => $request->phone,
             'name' => $request->name,
-            'email' => $request->email // Ajout du log pour l'email
+            'email' => $request->email
         ]);
 
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'phone' => 'required|string|max:20|unique:users,phone_number',
+                'phone' => 'required|string|max:10|unique:users,phone_number',
                 'email' => 'required|string|email|max:255|unique:users,email'
             ]);
 
             $user = User::create([
                 'name' => $validated['name'],
-                'phone_number' => $validated['phone'],
+                'phone_number' => '225' . $validated['phone'],
                 'email' => $validated['email'],
-                'password' => Hash::make($validated['phone']), // Utilisation du phone comme mot de passe par défaut
+                'password' => Hash::make('225' . $validated['phone']),
                 'api_token' => null,
             ]);
 
@@ -119,198 +179,236 @@ class AuthController extends Controller
     }
 
     public function sendOtp(Request $request)
-    {
-        // Validation
-        $validator = Validator::make($request->all(), [
-            'phone' => 'required|string|max:20',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            // Générer un OTP (exemple: 6 chiffres)
-            $otp = "123456";
-
-            // Ici vous devriez implémenter l'envoi réel (SMS, email, etc.)
-            // Pour le moment on log juste pour le débogage
-            Log::channel('auth')->info('OTP généré', [
-                'phone' => $request->phone,
-                'otp' => $otp
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'OTP envoyé avec succès',
-                'otp' => $otp // À retirer en production!
-            ]);
-
-        } catch (\Exception $e) {
-            Log::channel('auth')->error('Erreur sendOtp', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de l\'envoi de l\'OTP'
-            ], 500);
-        }
-    }
-
-//     public function verifyOtp(Request $request)
-// {
-//     // Validation des données
-//     $validator = Validator::make($request->all(), [
-//         'phone' => 'required|string|max:20',
-//         'otp' => 'required|string|size:6' // Supposant un OTP de 6 chiffres
-//     ]);
-
-//     if ($validator->fails()) {
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'Validation error',
-//             'errors' => $validator->errors()
-//         ], 422);
-//     }
-
-//     try {
-//         // ICI - Implémentez votre logique de vérification réelle
-//         // Ceci est un exemple basique - À adapter selon votre système
-        
-//         // En développement, vous pourriez comparer avec l'OTP généré précédemment
-//         // En production, utilisez un service de vérification d'OTP
-        
-//         $isOtpValid = true; // Remplacez par votre logique de validation
-        
-//         if ($isOtpValid) {
-//             // Trouver ou créer l'utilisateur
-//             $user = User::firstOrCreate(
-//                 ['phone' => $request->phone],
-//                 ['password' => Hash::make($request->phone)] // Mot de passe par défaut
-//             );
-
-//             // Créer un token d'authentification
-//             $token = $user->createToken('auth_token')->plainTextToken;
-
-//             return response()->json([
-//                 'success' => true,
-//                 'message' => 'OTP vérifié avec succès',
-//                 'user' => $user,
-//                 'token' => $token
-//             ]);
-//         }
-
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'OTP invalide'
-//         ], 401);
-
-//     } catch (\Exception $e) {
-//         Log::channel('auth')->error('Erreur verifyOtp', [
-//             'error' => $e->getMessage(),
-//             'trace' => $e->getTraceAsString()
-//         ]);
-        
-//         return response()->json([
-//             'success' => false,
-//             'message' => 'Erreur lors de la vérification'
-//         ], 500);
-//     }
-// }
-public function verifyOtp(Request $request)
 {
-    Log::info('[verifyOtp] Requête reçue', $request->all());
-
-    // Validation des données
     $validator = Validator::make($request->all(), [
-        'phone' => 'required|string|max:20',
-        'otp' => 'required|string|size:6' // Supposant un OTP de 6 chiffres
+        'phone' => 'required|string|max:10',
     ]);
 
     if ($validator->fails()) {
-        Log::warning('[verifyOtp] Échec de validation', [
-            'errors' => $validator->errors()
-        ]);
-
         return response()->json([
             'success' => false,
-            'message' => 'Validation error',
+            'message' => 'Numéro invalide',
             'errors' => $validator->errors()
         ], 422);
     }
 
     try {
-        Log::debug('[verifyOtp] Début de vérification OTP', [
-            'phone' => $request->phone,
-            'otp' => $request->otp
+        $phone = '225' . $request->phone;
+        
+        // OTP fixe pour le numéro de test
+        $otp = ($phone === '2250103810998') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+        Log::channel('sms')->info('Envoi OTP initié', [
+            'phone' => $phone,
+            'otp' => $otp,
+            'is_test_number' => ($phone === '2250103810998')
         ]);
 
-        // 💡 À remplacer par votre vraie logique de vérification d'OTP
-        $isOtpValid = true;
+        OtpCode::updateOrCreate(
+            ['phone_number' => $phone],
+            ['code' => $otp, 'expires_at' => now()->addMinutes(10)]
+        );
 
-        if ($isOtpValid) {
+        // Ne pas envoyer de SMS pour le numéro de test
+        if ($phone !== '2250103810998') {
+            $message = "Code: $otp";
+            $smsResult = $this->sendSms($phone, $message);
             
-
-            $user = User::withTrashed()->where('phone_number', $request->phone)->first();
-
-            if ($user && $user->trashed()) {
-                $user->restore();
-                Log::info("Utilisateur restauré (soft deleted) ID: {$user->id}");
-            } elseif (!$user) {
-                $user = User::create([
-                    'name' => 'kodak',
-                    'phone_number' => $request->phone,
-                    'password' => Hash::make($request->phone),
-                ]);
-                Log::info("Nouvel utilisateur créé ID: {$user->id}");
+            if (!$smsResult['success']) {
+                throw new \Exception($smsResult['message']);
             }
+        }
 
+        return response()->json([
+            'success' => true,
+            'message' => $phone === '2250103810998' ? 'Code de test généré' : 'Code envoyé',
+            'otp' => $otp
+        ]);
+
+    } catch (\Exception $e) {
+        Log::channel('sms')->error('Erreur OTP', [
+            'phone' => $this->normalizePhoneNumber($request->phone),
+            'error' => $e->getMessage()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur envoi'
+        ], 500);
+    }
+}
+
+
+public function resendOtp(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'phone' => 'required|string|max:10',
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Numéro invalide',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        $phone = '225' . $request->phone;
+        
+        // Cas spécial pour le numéro de test
+        if ($phone === '2250103810998') {
+            $otp = '123456'; // OTP fixe pour le numéro de test
+            $expiresAt = now()->addMinutes(10);
             
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            Log::info('[verifyOtp] OTP valide - Utilisateur connecté', [
-                'user_id' => $user->id,
-                'phone' => $user->phone
+            Log::channel('sms')->info('Renvoi OTP test', [
+                'phone' => $phone,
+                'action' => 'otp_fixe_envoye'
             ]);
-
+            
+            OtpCode::updateOrCreate(
+                ['phone_number' => $phone],
+                ['code' => $otp, 'expires_at' => $expiresAt, 'verified' => false]
+            );
+            
             return response()->json([
                 'success' => true,
-                'message' => 'OTP vérifié avec succès',
+                'message' => 'Code de test régénéré',
+                'otp' => $otp // Retourné uniquement en développement
+            ]);
+        }
+
+        // Comportement normal pour les autres numéros
+        $existingOtp = OtpCode::where('phone_number', $phone)
+                            ->where('expires_at', '>', now())
+                            ->first();
+
+        if ($existingOtp) {
+            $otp = $existingOtp->code;
+            $expiresAt = $existingOtp->expires_at;
+            Log::channel('sms')->debug('OTP existant réutilisé', ['phone' => $phone]);
+        } else {
+            $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+            $expiresAt = now()->addMinutes(10);
+            
+            OtpCode::updateOrCreate(
+                ['phone_number' => $phone],
+                ['code' => $otp, 'expires_at' => $expiresAt, 'verified' => false]
+            );
+            Log::channel('sms')->debug('Nouvel OTP généré', ['phone' => $phone]);
+        }
+
+        // Envoi SMS uniquement pour les numéros non-test
+        $message = "Code: $otp";
+        $smsResult = $this->sendSms($phone, $message);
+
+        if (!$smsResult['success']) {
+            throw new \Exception($smsResult['message']);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Code renvoyé',
+            'expires_in' => now()->diffInSeconds($expiresAt)
+        ]);
+
+    } catch (\Exception $e) {
+        Log::channel('sms')->error('Erreur renvoi OTP', [
+            'phone' => $request->phone,
+            'error' => $e->getMessage()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors du renvoi'
+        ], 500);
+    }
+}
+
+public function verifyOtp(Request $request)
+{
+    $validator = Validator::make($request->all(), [
+        'phone' => 'required|string|max:10',
+        'otp' => 'required|string|size:6'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Données invalides',
+            'errors' => $validator->errors()
+        ], 422);
+    }
+
+    try {
+        $phone = '225' . $request->phone;
+        $otp = $request->otp;
+
+        // Vérification spéciale pour le numéro de test
+        if ($phone === '2250103810998' && $otp === '123456') {
+            Log::channel('otp')->info('Validation OTP test réussie', ['phone' => $phone]);
+            
+            $user = User::firstOrCreate(
+                ['phone_number' => $phone],
+                [
+                    'name' => 'Utilisateur Test',
+                    'password' => Hash::make($phone)
+                ]
+            );
+            
+            $token = $user->createToken('auth_token')->plainTextToken;
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Connexion test réussie',
                 'user' => $user,
                 'token' => $token
             ]);
         }
 
-        Log::warning('[verifyOtp] OTP invalide', [
-            'phone' => $request->phone,
-            'otp_reçu' => $request->otp
-        ]);
+        // Vérification normale pour les autres numéros
+        $otpRecord = OtpCode::where('phone_number', $phone)
+                          ->where('code', $otp)
+                          ->where('expires_at', '>', now())
+                          ->first();
 
+        if (!$otpRecord) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code invalide ou expiré'
+            ], 401);
+        }
+
+        $otpRecord->update(['verified' => true]);
+        
+        $user = User::firstOrCreate(
+            ['phone_number' => $phone],
+            [
+                'name' => 'Utilisateur',
+                'password' => Hash::make($phone)
+            ]
+        );
+        
+        $token = $user->createToken('auth_token')->plainTextToken;
+        
         return response()->json([
-            'success' => false,
-            'message' => 'OTP invalide'
-        ], 401);
+            'success' => true,
+            'message' => 'Connexion réussie',
+            'user' => $user,
+            'token' => $token
+        ]);
 
     } catch (\Exception $e) {
-        Log::error('[verifyOtp] Erreur lors de la vérification', [
-            'exception' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
+        Log::channel('otp')->error('Erreur vérification', [
+            'phone' => $request->phone,
+            'error' => $e->getMessage()
         ]);
-
         return response()->json([
             'success' => false,
-            'message' => 'Erreur lors de la vérification'
+            'message' => 'Erreur vérification'
         ], 500);
     }
 }
-
+    
+   
 
     public function getUser(Request $request)
     {
@@ -340,7 +438,7 @@ public function verifyOtp(Request $request)
     
         try {
             // Soft delete
-            $user->delete(); // Si vous utilisez SoftDeletes
+            $user->delete();
             Log::info("Utilisateur ID: {$user->id} supprimé (soft delete)");
     
             // Suppression des tokens (déconnexion)

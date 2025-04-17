@@ -19,7 +19,8 @@ use App\Http\Controllers\Api\OrderController;
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'getUser']);
-    
+    Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
+
     // Gestion des commandes
     Route::post('/orders', [OrderController::class, 'store']);
    // Route::get('/orders/{id}', [OrderController::class, 'show']);
