@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('reference_commande')->unique();
             $table->date('date');
             $table->enum('engin', ['Moto', 'Camion', 'Tricycle']);
-            $table->enum('type_course', ['Course', 'Livraison']);
+            $table->enum('type_course', ['Course', 'Livraison', 'Expédition']);
             $table->enum('status_orders', ['En attente', 'Acceptée', 'En cours', 'Livrée', 'Annulée', 'Échouée']);
             $table->enum('status_payment', ['Non payé', 'Payé']);
             $table->enum('mode_payment', ['Espèces', 'Mobile Money', 'Carte Bancaire']);

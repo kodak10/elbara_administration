@@ -38,7 +38,7 @@ class OrderController extends Controller
         $orders->where('type_course', $request->type_course);
     }
 
-    $orders = $orders->paginate(10);
+    $orders = $orders->orderBy('date', 'desc')->paginate(10);
 
     return view('pages.orders.index', compact('orders', 'livreurs'));
 }
@@ -55,7 +55,7 @@ class OrderController extends Controller
      */
     public function historique()
     {
-        $orders = Order::whereIn('status_orders', ['Livrée', 'Annulée', 'Échouée'])->get();
+        $orders = Order::whereIn('status_orders', ['Livrée', 'Annulée', 'Échouée'])->orderBy('date', 'desc')->get();
         return view('pages.orders.historique', compact('orders'));
     }
 

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OrderController extends Controller
@@ -17,66 +19,125 @@ class OrderController extends Controller
      */
     public function store(Request $request)
     {
+        Log::info('Données reçues pour création de commande :', $request->all());
+
         try {
-           
-    
             // Validation des données
             $validated = $request->validate([
-                'user_id' => 'required',
-
-                'depart_lat' => 'required|numeric',
-                'depart_long' => 'required|numeric',
-                'destination_lat' => 'required|numeric',
-                'destination_long' => 'required|numeric',
-
-                'depart_adresse'=> 'required',
-                'destination_adresse'=> 'required',
-
-                'numero_destinateur' => 'required',
-                'numero_destinataire' => 'required',
-
-
-                'libelle' => 'nullable|string',
-                'montant' => 'required|numeric',
-                'distance_km' => 'required|numeric',
-
-                'engin' => 'required',
-                'mode_payement' => 'required',
-                //'status_payement' => 'required',
-                //'type_course' => 'required',
-
-
-            ]);
-    
-            // Création de la commande
-            $order = Order::create([
-                //'user_id' => $request->user()->id, // Utilisation de l'ID de l'utilisateur authentifié
-                'reference_commande' => '00' . str_pad(rand(0, 999), 3, '0', STR_PAD_LEFT),
+                'user_id' => 'required|exists:users,id',
                 
-                'date' => now(),
-                ...$validated,
-                'status' => 'En attente'
+                // Coordonnées géographiques
+                'depart_lat' => 'required|numeric|between:-90,90',
+                'depart_long' => 'required|numeric|between:-180,180',
+                'destination_lat' => 'required|numeric|between:-90,90',
+                'destination_long' => 'required|numeric|between:-180,180',
+                
+                // Adresses
+                'depart_adresse' => 'required|string|max:255',
+                'destination_adresse' => 'required|string|max:255',
+                
+                // Contacts
+                // 'numero_destinateur' => 'required|string|max:20',
+                // 'numero_destinataire' => 'required|string|max:20',
+                
+                // Informations course
+                'libelle' => 'nullable|string|max:255',
+                'montant' => 'required|numeric|min:0',
+                //'distance_km' => 'required|numeric|min:0',
+                'duree_minutes' => 'nullable|integer|min:0',
+                
+                // Sélections
+                'engin' => 'required|in:Moto,Camion,Tricycle',
+                'mode_payement' => 'required|in:Espèces,Mobile Money,Carte Bancaire',
+                'type_course' => 'nullable|in:Course,Livraison',
+                
+                // Instructions supplémentaires
+                'instructions' => 'nullable|string|max:500',
             ]);
-    
+
+            // Génération d'une référence de commande unique
+            $reference = 'CMD-' . Carbon::now()->format('Ymd') . '-' . Str::upper(Str::random(4));
+            
+            // Création de la commande avec valeurs par défaut
+            $order = Order::create([
+                'user_id' => $validated['user_id'],
+                'depart_lat' => $validated['depart_lat'],
+                'depart_long' => $validated['depart_long'],
+                'destination_lat' => $validated['destination_lat'],
+                'destination_long' => $validated['destination_long'],
+                'depart_adresse' => $validated['depart_adresse'],
+                'destination_adresse' => $validated['destination_adresse'],
+                // 'numero_destinateur' => $validated['numero_destinateur'],
+                // 'numero_destinataire' => $validated['numero_destinataire'],
+                'libelle' => $validated['libelle'] ?? null,
+                'montant' => $validated['montant'],
+                'distance_km' =>  0,
+                //'duree_minutes' => $validated['duree_minutes'] ?? $this->calculateDuration($validated['distance_km']),
+                'reference_commande' => $reference,
+                'date' => now(),
+                'engin' => $validated['engin'],
+                'type_course' => $validated['type_course'] ?? 'Course',
+                'status_orders' => 'En attente',
+                'status_payment' => 'Non payé',
+                'mode_payment' => $validated['mode_payement'], // Note: correction orthographique
+                'instructions' => $validated['instructions'] ?? null,
+                'status_livreur' => 'En attente',
+            ]);
+
             return response()->json([
                 'success' => true,
                 'order' => $order,
-                'message' => 'Order created successfully'
-            ]);
-    
+                'message' => 'Commande créée avec succès'
+            ], 201);
+
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation error',
+                'message' => 'Erreur de validation',
                 'errors' => $e->errors()
             ], 422);
         } catch (\Exception $e) {
-            Log::error('Order creation error: '.$e->getMessage());
+            Log::error('Erreur création commande: '.$e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Order creation failed'
+                'message' => 'Échec de la création de commande',
+                'error' => env('APP_DEBUG') ? $e->getMessage() : null
             ], 500);
         }
+    }
+
+    private function calculateDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        // Implémentez votre logique de calcul de distance ici
+        // Exemple simplifié (vous devriez utiliser une API comme Google Maps)
+        $theta = $lon1 - $lon2;
+        $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
+        $dist = acos($dist);
+        $dist = rad2deg($dist);
+        $miles = $dist * 60 * 1.1515;
+        
+        return round($miles * 1.609344, 2); // Retourne la distance en km
+    }
+
+    private function calculatePrice($distance, $engin)
+    {
+        // Logique de calcul du prix en fonction de la distance et du type d'engin
+        $basePrice = 500; // Prix de base en FCFA
+        $pricePerKm = 200; // Prix par km en FCFA
+        
+        if ($engin === 'Camion') {
+            $pricePerKm = 300;
+        } elseif ($engin === 'Tricycle') {
+            $pricePerKm = 250;
+        }
+        
+        return $basePrice + ($distance * $pricePerKm);
+    }
+
+    private function calculateDuration($distance)
+    {
+        // Estimation simplifiée : 2 minutes par km
+        return round($distance * 2);
     }
 
     /**
@@ -190,8 +251,8 @@ class OrderController extends Controller
             'status' => $order->status_orders,
             'depart_adresse' => $order->depart_adresse,
             'destination_adresse' => $order->destination_adresse,
-            'numero_destinateur' => $order->numero_destinateur,
-            'numero_destinataire' => $order->numero_destinataire,
+            // 'numero_destinateur' => $order->numero_destinateur,
+            // 'numero_destinataire' => $order->numero_destinataire,
             'libelle' => $order->libelle,
             'montant' => $order->montant,
             'engin' => $order->engin,
@@ -200,10 +261,85 @@ class OrderController extends Controller
             'mode_payment' => $order->mode_payment,
             'instructions' => $order->instructions,
             'livreur' => $order->livreur ? [
-                'name' => $order->livreur->name,
-                'phone' => $order->livreur->phone,
+                'nom' => $order->livreur->name,
+                'numero_telephone' => $order->livreur->phone,
                 'vehicle' => $order->livreur->vehicle
             ] : null
         ];
+    }
+
+
+
+
+
+    public function livreurOrders(Request $request)
+{
+    $user = $request->user();
+    
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'Utilisateur non authentifié'], 401);
+    }
+
+    if (!$user->livreur) {
+        return response()->json(['success' => false, 'message' => 'Unauthorized - Pas livreur'], 403);
+    }
+
+    $orders = Order::where('livreur_id', $user->livreur->id)
+        ->whereIn('status_orders', ['Acceptée', 'En cours'])
+        ->with(['user' => function($query) {
+            $query->select('id', 'name as client_name', 'phone_number as client_phone');
+        }])
+        ->orderBy('created_at', 'desc')
+        ->get()
+        ->map(function($order) {
+            return [
+                'id' => $order->id,
+                'client_name' => $order->user->client_name,
+                'client_phone' => $order->user->client_phone,
+                'numero_destinateur' => $order->numero_destinateur,
+                'numero_destinataire' => $order->numero_destinataire,
+                'montant' => $order->montant,
+                'depart_adresse' => $order->depart_adresse,
+                'destination_adresse' => $order->destination_adresse,
+                'depart_latitude' => $order->depart_lat,
+                'depart_longitude' => $order->depart_long,
+                'destination_latitude' => $order->destination_lat,
+                'destination_longitude' => $order->destination_long,
+                'status_orders' => $order->status_orders,
+                'created_at' => $order->created_at->format('H:i'),
+                'distance_km' => $order->distance_km,
+                'duree_minutes' => $order->duree_minutes,
+                'engin' => $order->engin,
+                'type_course' => $order->type_course,
+            ];
+        });
+
+    return response()->json([
+        'success' => true,
+        'data' => $orders
+    ]);
+}
+    public function cancelOrder(Request $request, Order $order)
+    {
+        $user = $request->user();
+        
+        // if ($order->livreur_id !== $user->livreur->id) {
+        //     return response()->json(['message' => 'Unauthorized'], 403);
+        // }
+
+        if (!$user->livreur) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $order->update([
+            'status_orders' => 'Annulée',
+            'status_livreur' => null,
+            'historique_statut' => array_merge(
+                $order->historique_statut ?? [],
+                [['status' => 'Annulée', 'date' => now(), 'by' => 'driver']]
+            ),
+        ]);
+
+        return response()->json(['message' => 'Order cancelled successfully']);
     }
 }

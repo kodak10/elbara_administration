@@ -71,9 +71,9 @@ class LivreurController extends Controller
 
     // Créer un utilisateur avec un mot de passe par défaut
     $user = User::create([
-        'name' => $demandeLivreur->prenoms . ' ' . $demandeLivreur->nom, // Nom complet
+        'name' => $demandeLivreur->nom . ' ' . $demandeLivreur->prenoms, // Nom complet
         'email' => $demandeLivreur->email,  // Email de la demande
-        'password' => Hash::make('Elbara2025'),  // Mot de passe par défaut
+        'password' => Hash::make($demandeLivreur->numero_telephone),  // Mot de passe est le numero de telephone
         'status' => 'actif',  // Status actif par défaut
     ]);
     
@@ -101,48 +101,63 @@ class LivreurController extends Controller
 }
     
 
-    public function store(Request $request)
-    {
-        // Validation des données
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'prenoms' => 'required|string|max:255',
-            //'email' => 'required|email|unique:users,email',
-            'numero_telephone' => 'required|string|max:15',
-            'lieu_residence' => 'required|string|max:255',
-            'a_moto' => 'required|boolean',
-            'type' => 'required|string',
-        ]);
-    
-        // Générer un code unique pour le livreur
-         $livreurCode = 'LIV_' . strtoupper(substr(preg_replace('/\D/', '', uniqid()), -4));  // Code unique pour le livreur composé uniquement de chiffres
+public function store(Request $request)
+{
+    // Validation des données
+    $request->validate([
+        'nom' => 'required|string|max:255',
+        'prenoms' => 'required|string|max:255',
+        // 'email' => 'required|email|unique:users,email',
+        'numero_telephone' => 'required|string|max:10',
+        'lieu_residence' => 'required|string|max:255',
+        'a_moto' => 'required|boolean',
+        'type' => 'required|string',
+    ]);
 
-    
-        // Créer un utilisateur avec un mot de passe par défaut
-        $user = User::create([
-            'name' => $request->prenoms . ' ' . $request->nom, // Nom de l'utilisateur
-            'email' => $request->email, // L'email
-            'password' => Hash::make('Elbara2025'), // Mot de passe par défaut
-            'status' => "actif",
-        ]);
-    
-        // Assigner le rôle "livreur" (ou un rôle personnalisé pour les livreurs)
-        $user->assignRole('livreur'); // Assurez-vous que le rôle 'livreur' existe
-    
-        // Créer le livreur
-        $livreur = Livreur::create([
-            'user_id' => $user->id,
-            'code' => $livreurCode,
-            'nom' => $request->nom,
-            'type' => $request->type,
-            'prenoms' => $request->prenoms,
-            'numero_telephone' => $request->numero_telephone,
-            'lieu_residence' => $request->lieu_residence,
-            'informations_complementaires' => $request->informations_complementaires, // Ajout des informations complémentaires
-        ]);
-    
-        return redirect()->route('livreurs.index')->with('success', 'Livreur créé avec succès');
+    // Traiter le numéro pour ajouter 225 s'il manque
+    $numero_telephone = $request->numero_telephone;
+    if (!str_starts_with($numero_telephone, '225')) {
+        $numero_telephone = '225' . $numero_telephone;
     }
+
+    // Debug pour vérifier le numéro modifié
+    logger()->info('Numéro de téléphone après ajout du 225 : ' . $numero_telephone);
+
+    // Générer un code unique pour le livreur
+    $livreurCode = 'LIV_' . strtoupper(substr(preg_replace('/\D/', '', uniqid()), -4)); // Code unique pour le livreur
+    logger()->info('Code généré pour le livreur : ' . $livreurCode);
+
+    // Créer un utilisateur avec un mot de passe par défaut
+    $user = User::create([
+        'name' => $request->prenoms . ' ' . $request->nom,
+        //'email' => $request->email, // Attention : si l'email est commenté dans la validation, il peut causer une erreur ici
+        'phone_number' => $numero_telephone,
+        'password' => Hash::make($numero_telephone),
+        'status' => "actif",
+    ]);
+
+    logger()->info('Utilisateur créé avec ID : ' . $user->id);
+
+    // Assigner le rôle "livreur"
+    $user->assignRole('livreur');
+    logger()->info('Rôle livreur assigné à l\'utilisateur');
+
+    // Créer le livreur
+    $livreur = Livreur::create([
+        'user_id' => $user->id,
+        'code' => $livreurCode,
+        'nom' => $request->nom,
+        'type' => $request->type,
+        'prenoms' => $request->prenoms,
+        'numero_telephone' => $numero_telephone,
+        'lieu_residence' => $request->lieu_residence,
+        'informations_complementaires' => $request->informations_complementaires,
+    ]);
+
+    logger()->info('Livreur créé avec ID : ' . $livreur->id);
+
+    return redirect()->route('livreurs.index')->with('success', 'Livreur créé avec succès');
+}
     
     public function show($id)
     {

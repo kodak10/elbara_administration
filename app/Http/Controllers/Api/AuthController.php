@@ -93,7 +93,6 @@ private function normalizePhoneNumber($phone)
             'phone' => 'required|string|min:8|max:10',
         ]);
 
-        //$phone = $request->phone;
         $phone = '225' . $request->phone;
 
         Log::info('📞 Numéro reçu après validation : ' . $phone);

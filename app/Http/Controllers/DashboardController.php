@@ -21,7 +21,7 @@ class DashboardController extends Controller
     
 
     // Récupérer les commandes en cours / en attente
-    $orders = Order::whereIn('status_orders', ['En cours', 'En attente'])->get();
+    $orders = Order::whereIn('status_orders', ['En cours', 'En attente'])->orderBy('date', 'desc')->get();
 
     // Récupérer les notifications (par exemple, les derniers événements)
     // $notifications = Notification::latest()->limit(5)->get();
