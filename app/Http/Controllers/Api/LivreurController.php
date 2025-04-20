@@ -3,13 +3,64 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Order;
+use App\Models\DemandeLivreur;
 use App\Models\Livreur;
+use App\Models\Order;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class LivreurController extends Controller
 {
+
+    public function demandeLivreur(Request $request)
+    {
+        Log::info('Received demande livreur request', $request->all());
+
+        try {
+            $validated = $request->validate([
+                'nom' => 'required|string|max:255',
+                'prenoms' => 'required|string|max:255',
+                'numero_telephone' => 'required|string|max:20',
+                'email' => 'required|email|max:255',
+                'lieu_residence' => 'nullable|string|max:255',
+                'image' => 'nullable|image', // nullable au cas où pas d'image
+            ]);
+
+            // Créer la demande sans l'image
+            $demande = DemandeLivreur::create($validated);
+
+            // Upload de l'image si elle existe
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $fileName = $demande->id . '.' . $file->getClientOriginalExtension();
+                $path = $file->storeAs('public/demandes', $fileName);
+                
+                // Mettre à jour le chemin de l'image dans la base de données
+                $demande->update([
+                    'image' => 'demandes/' . $fileName,
+                ]);
+            }
+            
+            
+
+            Log::info('Demande created successfully', ['id' => $demande->id]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Demande enregistrée avec succès',
+                'data' => $demande
+            ], 201);
+
+        } catch (\Exception $e) {
+            Log::error('Error creating demande: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'enregistrement',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     public function getLivreurInfo(Request $request)
     {
@@ -20,13 +71,13 @@ class LivreurController extends Controller
             Log::info('Utilisateur trouvé:', ['user_id' => $user->id]);
             
             // Vérifiez que la relation 'driver' existe dans votre modèle User
-            if (!$user->relationLoaded('driver')) {
-                $user->load('driver');
+            if (!$user->relationLoaded('livreur')) {
+                $user->load('livreur');
             }
             
-            $driver = $user->driver;
+            $livreur = $user->livreur;
             
-            if (!$driver) {
+            if (!$livreur) {
                 Log::warning('Aucun livreur associé à cet utilisateur');
                 return response()->json([
                     'success' => false,
@@ -35,17 +86,19 @@ class LivreurController extends Controller
             }
             
             Log::info('Livreur trouvé:', [
-                'driver_id' => $driver->id,
-                'name' => $driver->name,
-                'phone' => $driver->phone
+                'livreur_id' => $livreur->id,
+                'name' => $livreur->nom,
+                'name' => $livreur->prenoms,
+                'phone' => $livreur->numero_telephone
             ]);
             
             return response()->json([
                 'success' => true,
                 'data' => [
-                    'name' => $driver->name,
-                    'phone' => $driver->phone,
-                    'id' => $driver->id,
+                    'name' => $livreur->nom,
+                    'name' => $livreur->prenoms,
+                    'phone' => $livreur->numero_telephone,
+                    'id' => $livreur->id,
                 ]
             ]);
             
@@ -58,7 +111,7 @@ class LivreurController extends Controller
             ], 500);
         }
     }
-    
+
     /**
      * Récupère les statistiques des commandes pour un livreur
      */
@@ -223,7 +276,7 @@ class LivreurController extends Controller
         try {
             $validated = $request->validate([
                 'livreur_id' => 'required|exists:livreurs,id',
-                'status' => 'required|in:disponible,indisponible'
+                'status' => 'required|in:actif,inactif'
             ]);
 
             $livreur = Livreur::find($validated['livreur_id']);
@@ -242,6 +295,130 @@ class LivreurController extends Controller
             return response()->json([
                 'error' => 'Erreur lors de la mise à jour du statut',
                 'details' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+
+    public function getOrdersByStatus(Request $request)
+    {
+        Log::info("[OrderController] Début getOrdersByStatus", ['status' => $request->query('status')]);
+
+        try {
+            $user = $request->user();
+            $livreur = $user->livreur;
+
+            if (!$livreur) {
+                return response()->json(['error' => 'Livreur non trouvé'], 404);
+            }
+
+            $status = $request->query('status', 'pending');
+            $statusMapping = [
+                'pending' => 'En attente',
+                'completed' => 'Terminée',
+                'cancelled' => 'Annulée',
+                'in_progress' => ['En cours', 'Acceptée']
+            ];
+
+            if (!array_key_exists($status, $statusMapping)) {
+                return response()->json(['error' => 'Statut invalide'], 400);
+            }
+
+            $query = Order::with(['user', 'depart', 'destination'])
+                ->where('livreur_id', $livreur->id);
+
+            if ($status === 'in_progress') {
+                $query->whereIn('status_orders', $statusMapping[$status]);
+            } else {
+                $query->where('status_orders', $statusMapping[$status]);
+            }
+
+            $orders = $query->orderBy('created_at', 'desc')
+                ->get()
+                ->map(function ($order) {
+                    return [
+                        'id' => $order->id,
+                        'client_name' => $order->user->name ?? 'Client inconnu',
+                        'client_phone' => $order->user->phone ?? $order->numero_destinateur,
+                        'depart_adresse' => $order->depart_adresse,
+                        'destination_adresse' => $order->destination_adresse,
+                        'depart_latitude' => $order->depart->latitude ?? null,
+                        'depart_longitude' => $order->depart->longitude ?? null,
+                        'destination_latitude' => $order->destination->latitude ?? null,
+                        'destination_longitude' => $order->destination->longitude ?? null,
+                        'montant' => $order->montant,
+                        'status_orders' => $order->status_orders,
+                        'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                        'rating' => $order->rating ?? 0,
+                        'total_ratings' => $order->user->ratings()->count() ?? 0,
+                        'numero_destinateur' => $order->numero_destinateur,
+                    ];
+                });
+
+            Log::info("[OrderController] Commandes trouvées: " . $orders->count());
+            return response()->json([
+                'success' => true,
+                'data' => $orders
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[OrderController] Erreur dans getOrdersByStatus: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur serveur',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Annule une commande
+     */
+    public function cancelOrder(Request $request, $orderId)
+    {
+        Log::info("[OrderController] Tentative d'annulation de commande", ['order_id' => $orderId]);
+
+        try {
+            $user = $request->user();
+            $livreur = $user->livreur;
+
+            if (!$livreur) {
+                return response()->json(['error' => 'Livreur non trouvé'], 404);
+            }
+
+            $order = Order::where('id', $orderId)
+                ->where('livreur_id', $livreur->id)
+                ->first();
+
+            if (!$order) {
+                return response()->json(['error' => 'Commande non trouvée'], 404);
+            }
+
+            if ($order->status_orders !== 'En attente') {
+                return response()->json([
+                    'error' => 'Seules les commandes en attente peuvent être annulées'
+                ], 400);
+            }
+
+            $order->update([
+                'status_orders' => 'Annulée',
+                'cancelled_at' => now(),
+                'cancelled_by' => 'livreur'
+            ]);
+
+            Log::info("[OrderController] Commande annulée avec succès");
+            return response()->json([
+                'success' => true,
+                'message' => 'Commande annulée avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("[OrderController] Erreur d'annulation: " . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Erreur lors de l\'annulation',
+                'error' => $e->getMessage()
             ], 500);
         }
     }

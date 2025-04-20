@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\Livreur;
 use App\Models\Order;
+use Database\Seeders\LivreurSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Route;
     Route::post('/check-phone', [AuthController::class, 'checkPhone']);
 
     Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/demande-livreur', [LivreurController::class, 'demandeLivreur']);
+
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     //Route::post('/logout', [AuthController::class, 'logout']);
@@ -43,12 +46,25 @@ use Illuminate\Support\Facades\Route;
 
 
         Route::prefix('livreurs')->group(function () {
-            Route::get('/stats/{userId}', [LivreurController::class, 'getOrderStats']);
-            Route::get('/pending/{userId}', [LivreurController::class, 'getPendingOrders']);
-            Route::get('/in-progress/{userId}', [LivreurController::class, 'getInProgressOrders']);
+            Route::get('/info', [LivreurController::class,  'getLivreurInfo']);
+            //Route::get('/stats/{userId}', [LivreurController::class, 'getOrderStats']);
+            // Route::get('/pending/{userId}', [LivreurController::class, 'getPendingOrders']);
+            // Route::get('/in-progress/{userId}', [LivreurController::class, 'getInProgressOrders']);
             Route::post('/update-status', [LivreurController::class, 'updateStatus']);
 
-            Route::get('/info', [LivreurController::class,  'getLivreurInfo']);
+
+
+
+            // Informations du livreur
+            
+            // Statistiques des commandes
+            Route::get('/stats/{userId}', [OrderController::class, 'getOrderStats']);
+            
+            // Commandes par statut
+            Route::get('/orders', [OrderController::class, 'getOrdersByStatus']);
+            
+            // Annuler une commande
+            Route::post('/orders/{orderId}/cancel', [OrderController::class, 'cancelOrder']);
 
         });
         

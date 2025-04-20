@@ -15,7 +15,7 @@ class DemandeLivreur extends Model
         'prenoms',
         'numero_telephone',
         'lieu_residence',
-        'a_moto',
+        'image',
         'message',
     ];
 

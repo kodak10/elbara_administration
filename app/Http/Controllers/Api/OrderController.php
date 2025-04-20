@@ -285,7 +285,7 @@ class OrderController extends Controller
     }
 
     $orders = Order::where('livreur_id', $user->livreur->id)
-        ->whereIn('status_orders', ['Acceptée', 'En cours'])
+        ->whereIn('status_orders', ['Acceptée', 'En cours', 'Annulée'])
         ->with(['user' => function($query) {
             $query->select('id', 'name as client_name', 'phone_number as client_phone');
         }])

@@ -195,12 +195,12 @@ private function normalizePhoneNumber($phone)
         $phone = '225' . $request->phone;
         
         // OTP fixe pour le numéro de test
-        $otp = ($phone === '2250103810998') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        $otp = ($phone === '2250101010101') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
         Log::channel('sms')->info('Envoi OTP initié', [
             'phone' => $phone,
             'otp' => $otp,
-            'is_test_number' => ($phone === '2250103810998')
+            'is_test_number' => ($phone === '2250101010101')
         ]);
 
         OtpCode::updateOrCreate(
@@ -209,7 +209,7 @@ private function normalizePhoneNumber($phone)
         );
 
         // Ne pas envoyer de SMS pour le numéro de test
-        if ($phone !== '2250103810998') {
+        if ($phone !== '2250101010101') {
             $message = "Code: $otp";
             $smsResult = $this->sendSms($phone, $message);
             
@@ -220,7 +220,7 @@ private function normalizePhoneNumber($phone)
 
         return response()->json([
             'success' => true,
-            'message' => $phone === '2250103810998' ? 'Code de test généré' : 'Code envoyé',
+            'message' => $phone === '2250101010101' ? 'Code de test généré' : 'Code envoyé',
             'otp' => $otp
         ]);
 
