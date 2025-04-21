@@ -13,14 +13,18 @@ return new class extends Migration
     {
         Schema::create('livreurs', function (Blueprint $table) {
             $table->id();
+            $table->string('code'); 
             $table->string('nom');
             $table->string('prenoms');
             $table->string('numero_telephone');
-            $table->string('type')->nullable(); // Externe ou Interne
+            $table->string('type')->nullable(); 
             $table->string('lieu_residence')->nullable();
-            $table->string('photo')->nullable(); // Photo du livreur
-            $table->string('status')->default('actif'); // Status du livreur (actif, suspendu, etc.)
-            $table->text('informations_complementaires')->nullable(); // Informations supplémentaires
+            $table->string('photo')->nullable(); 
+            $table->string('status')->default('actif'); 
+            $table->text('informations_complementaires')->nullable(); 
+            $table->boolean('approuve')->default(false); 
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+
             $table->timestamps();
         });
     }

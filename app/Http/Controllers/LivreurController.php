@@ -73,7 +73,8 @@ class LivreurController extends Controller
     $user = User::create([
         'name' => $demandeLivreur->nom . ' ' . $demandeLivreur->prenoms, // Nom complet
         'email' => $demandeLivreur->email,  // Email de la demande
-        'password' => Hash::make($demandeLivreur->numero_telephone),  // Mot de passe est le numero de telephone
+        'password' => Hash::make($demandeLivreur->numero_telephone),
+        'phone_number' => '225' . $demandeLivreur->numero_telephone,
         'status' => 'actif',  // Status actif par défaut
     ]);
     
@@ -86,7 +87,7 @@ class LivreurController extends Controller
         'code' => 'LIV_' . strtoupper(substr(preg_replace('/\D/', '', uniqid()), -4)),  // Code unique pour le livreur composé uniquement de chiffres
         'nom' => $demandeLivreur->nom,
         'prenoms' => $demandeLivreur->prenoms,
-        'numero_telephone' => $demandeLivreur->numero_telephone,
+        'numero_telephone' => '225' . $demandeLivreur->numero_telephone,
         'lieu_residence' => $demandeLivreur->lieu_residence,
         'informations_complementaires' => $demandeLivreur->informations_complementaires,
         'type' => $demandeLivreur->type,  // Externe ou Interne

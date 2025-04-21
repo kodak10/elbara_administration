@@ -303,16 +303,20 @@ class LivreurController extends Controller
 
     public function getOrdersByStatus(Request $request)
     {
-        Log::info("[OrderController] Début getOrdersByStatus", ['status' => $request->query('status')]);
-
+        Log::info("[OrderController] Début getOrdersByStatus", ['status_reçue' => $request->query('status')]);
+    
         try {
             $user = $request->user();
+            Log::info("[OrderController] Utilisateur authentifié", ['user_id' => $user->id]);
+    
             $livreur = $user->livreur;
-
             if (!$livreur) {
+                Log::warning("[OrderController] Livreur non trouvé pour l'utilisateur", ['user_id' => $user->id]);
                 return response()->json(['error' => 'Livreur non trouvé'], 404);
             }
-
+    
+            Log::info("[OrderController] Livreur trouvé", ['livreur_id' => $livreur->id]);
+    
             $status = $request->query('status', 'pending');
             $statusMapping = [
                 'pending' => 'En attente',
@@ -320,50 +324,61 @@ class LivreurController extends Controller
                 'cancelled' => 'Annulée',
                 'in_progress' => ['En cours', 'Acceptée']
             ];
-
+    
             if (!array_key_exists($status, $statusMapping)) {
+                Log::warning("[OrderController] Statut invalide reçu", ['status' => $status]);
                 return response()->json(['error' => 'Statut invalide'], 400);
             }
-
+    
+            Log::info("[OrderController] Statut valide", ['status' => $status, 'mapping' => $statusMapping[$status]]);
+    
             $query = Order::with(['user', 'depart', 'destination'])
                 ->where('livreur_id', $livreur->id);
-
+    
             if ($status === 'in_progress') {
                 $query->whereIn('status_orders', $statusMapping[$status]);
+                Log::info("[OrderController] Recherche de commandes avec plusieurs statuts", ['statuts' => $statusMapping[$status]]);
             } else {
                 $query->where('status_orders', $statusMapping[$status]);
+                Log::info("[OrderController] Recherche de commandes avec un seul statut", ['statut' => $statusMapping[$status]]);
             }
-
-            $orders = $query->orderBy('created_at', 'desc')
-                ->get()
-                ->map(function ($order) {
-                    return [
-                        'id' => $order->id,
-                        'client_name' => $order->user->name ?? 'Client inconnu',
-                        'client_phone' => $order->user->phone ?? $order->numero_destinateur,
-                        'depart_adresse' => $order->depart_adresse,
-                        'destination_adresse' => $order->destination_adresse,
-                        'depart_latitude' => $order->depart->latitude ?? null,
-                        'depart_longitude' => $order->depart->longitude ?? null,
-                        'destination_latitude' => $order->destination->latitude ?? null,
-                        'destination_longitude' => $order->destination->longitude ?? null,
-                        'montant' => $order->montant,
-                        'status_orders' => $order->status_orders,
-                        'created_at' => $order->created_at->format('Y-m-d H:i:s'),
-                        'rating' => $order->rating ?? 0,
-                        'total_ratings' => $order->user->ratings()->count() ?? 0,
-                        'numero_destinateur' => $order->numero_destinateur,
-                    ];
-                });
-
-            Log::info("[OrderController] Commandes trouvées: " . $orders->count());
+    
+            $orders = $query->orderBy('created_at', 'desc')->get();
+    
+            Log::info("[OrderController] Nombre de commandes récupérées", ['nombre' => $orders->count()]);
+    
+            $ordersMapped = $orders->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'client_name' => $order->user->name ?? 'Client inconnu',
+                    'client_phone' => $order->user->phone ?? $order->numero_destinateur,
+                    'depart_adresse' => $order->depart_adresse,
+                    'destination_adresse' => $order->destination_adresse,
+                    'depart_latitude' => $order->depart->latitude ?? null,
+                    'depart_longitude' => $order->depart->longitude ?? null,
+                    'destination_latitude' => $order->destination->latitude ?? null,
+                    'destination_longitude' => $order->destination->longitude ?? null,
+                    'montant' => $order->montant,
+                    'status_orders' => $order->status_orders,
+                    'created_at' => $order->created_at->format('Y-m-d H:i:s'),
+                    'rating' => $order->rating ?? 0,
+                    'total_ratings' => $order->user->ratings()->count() ?? 0,
+                    'numero_destinateur' => $order->numero_destinateur,
+                ];
+            });
+    
+            Log::info("[OrderController] Fin de traitement getOrdersByStatus");
+    
             return response()->json([
                 'success' => true,
-                'data' => $orders
+                'data' => $ordersMapped
             ]);
-
+    
         } catch (\Exception $e) {
-            Log::error("[OrderController] Erreur dans getOrdersByStatus: " . $e->getMessage());
+            Log::error("[OrderController] Exception capturée", [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur serveur',
@@ -371,6 +386,7 @@ class LivreurController extends Controller
             ], 500);
         }
     }
+    
 
     /**
      * Annule une commande

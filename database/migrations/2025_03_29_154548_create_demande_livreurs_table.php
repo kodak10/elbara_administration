@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('numero_telephone');
             $table->string('lieu_residence')->nullable();
             $table->string('message')->nullable();
+            $table->string('image')->nullable();
+            $table->boolean('approuve')->default(false);
+            $table->boolean('a_moto')->nullable();
+
             $table->timestamps();
         });
     }
