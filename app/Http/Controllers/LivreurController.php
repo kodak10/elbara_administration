@@ -108,7 +108,6 @@ public function store(Request $request)
     $request->validate([
         'nom' => 'required|string|max:255',
         'prenoms' => 'required|string|max:255',
-        // 'email' => 'required|email|unique:users,email',
         'numero_telephone' => 'required|string|max:10',
         'lieu_residence' => 'required|string|max:255',
         'a_moto' => 'required|boolean',
@@ -131,10 +130,10 @@ public function store(Request $request)
     // Créer un utilisateur avec un mot de passe par défaut
     $user = User::create([
         'name' => $request->prenoms . ' ' . $request->nom,
-        //'email' => $request->email, // Attention : si l'email est commenté dans la validation, il peut causer une erreur ici
         'phone_number' => $numero_telephone,
         'password' => Hash::make($numero_telephone),
         'status' => "actif",
+        'image' => 'storage/app/public/images/profile-default.webp', // Ajouter l'image par défaut
     ]);
 
     logger()->info('Utilisateur créé avec ID : ' . $user->id);
@@ -159,6 +158,7 @@ public function store(Request $request)
 
     return redirect()->route('livreurs.index')->with('success', 'Livreur créé avec succès');
 }
+
     
     public function show($id)
     {

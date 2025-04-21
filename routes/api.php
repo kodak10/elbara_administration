@@ -34,6 +34,11 @@ use Illuminate\Support\Facades\Route;
         // Authentification
         Route::get('/user', [AuthController::class, 'getUser']);
         Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
+
+        Route::post('/update-profile', [UserController::class, 'update']);
+
+        Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
+
     
         // Gestion des commandes
         Route::post('/orders', [OrderController::class, 'store']);

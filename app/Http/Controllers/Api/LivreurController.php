@@ -8,6 +8,7 @@ use App\Models\Livreur;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class LivreurController extends Controller
 {
@@ -437,5 +438,38 @@ class LivreurController extends Controller
                 'error' => $e->getMessage()
             ], 500);
         }
+    }
+
+
+    public function updateImage(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $user = $request->user();
+       // $livreur = $user->livreur;
+
+        // if (!$livreur) {
+        //     return response()->json(['error' => 'Livreur non trouvé'], 404);
+        // }
+        
+       // $user = Auth::user();
+        
+        // Supprime l'ancienne image si elle existe
+        if ($user->image) {
+            Storage::delete($user->image);
+        }
+
+        // Stocke la nouvelle image
+        $path = $request->file('image')->store('public/users');
+        $user->image = str_replace('public/', '', $path);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'user' => $user,
+            'message' => 'Image de profil mise à jour avec succès'
+        ]);
     }
 }
