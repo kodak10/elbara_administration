@@ -80,7 +80,7 @@ class OrderController extends Controller
 
     // Affecter le livreur sélectionné à la commande
     $order->livreur_id = $request->livreur_id;
-    $order->status_orders = "Acceptée";
+    $order->status_orders = "Assignée";
 
     $order->save();
 

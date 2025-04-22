@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
+
 
 class OrderController extends Controller
 {
@@ -269,77 +271,241 @@ class OrderController extends Controller
     }
 
 
-
-
-
     public function livreurOrders(Request $request)
-{
-    $user = $request->user();
-    
-    if (!$user) {
-        return response()->json(['success' => false, 'message' => 'Utilisateur non authentifié'], 401);
-    }
-
-    if (!$user->livreur) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized - Pas livreur'], 403);
-    }
-
-    $orders = Order::where('livreur_id', $user->livreur->id)
-        ->whereIn('status_orders', ['Acceptée', 'En cours', 'Annulée'])
-        ->with(['user' => function($query) {
-            $query->select('id', 'name as client_name', 'phone_number as client_phone');
-        }])
-        ->orderBy('created_at', 'desc')
-        ->get()
-        ->map(function($order) {
-            return [
-                'id' => $order->id,
-                'client_name' => $order->user->client_name,
-                'client_phone' => $order->user->client_phone,
-                'numero_destinateur' => $order->numero_destinateur,
-                'numero_destinataire' => $order->numero_destinataire,
-                'montant' => $order->montant,
-                'depart_adresse' => $order->depart_adresse,
-                'destination_adresse' => $order->destination_adresse,
-                'depart_latitude' => $order->depart_lat,
-                'depart_longitude' => $order->depart_long,
-                'destination_latitude' => $order->destination_lat,
-                'destination_longitude' => $order->destination_long,
-                'status_orders' => $order->status_orders,
-                'created_at' => $order->created_at->format('H:i'),
-                'distance_km' => $order->distance_km,
-                'duree_minutes' => $order->duree_minutes,
-                'engin' => $order->engin,
-                'type_course' => $order->type_course,
-            ];
-        });
-
-    return response()->json([
-        'success' => true,
-        'data' => $orders
-    ]);
-}
-    public function cancelOrder(Request $request, Order $order)
     {
         $user = $request->user();
         
-        // if ($order->livreur_id !== $user->livreur->id) {
-        //     return response()->json(['message' => 'Unauthorized'], 403);
-        // }
-
-        if (!$user->livreur) {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Utilisateur non authentifié'], 401);
         }
 
-        $order->update([
-            'status_orders' => 'Annulée',
-            'status_livreur' => null,
-            'historique_statut' => array_merge(
-                $order->historique_statut ?? [],
-                [['status' => 'Annulée', 'date' => now(), 'by' => 'driver']]
-            ),
+        if (!$user->livreur) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized - Pas livreur'], 403);
+        }
+
+        $orders = Order::where('livreur_id', $user->livreur->id)
+            ->whereIn('status_orders', ['Acceptée', 'En cours', 'Annulée'])
+            ->with(['user' => function($query) {
+                $query->select('id', 'name as client_name', 'phone_number as client_phone');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($order) {
+                return [
+                    'id' => $order->id,
+                    'client_name' => $order->user->client_name,
+                    'client_phone' => $order->user->client_phone,
+                    'numero_destinateur' => $order->numero_destinateur,
+                    'numero_destinataire' => $order->numero_destinataire,
+                    'montant' => $order->montant,
+                    'depart_adresse' => $order->depart_adresse,
+                    'destination_adresse' => $order->destination_adresse,
+                    'depart_latitude' => $order->depart_lat,
+                    'depart_longitude' => $order->depart_long,
+                    'destination_latitude' => $order->destination_lat,
+                    'destination_longitude' => $order->destination_long,
+                    'status_orders' => $order->status_orders,
+                    'created_at' => $order->created_at->format('H:i'),
+                    'distance_km' => $order->distance_km,
+                    'duree_minutes' => $order->duree_minutes,
+                    'engin' => $order->engin,
+                    'type_course' => $order->type_course,
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+    public function cancelOrder(Request $request, $orderId)
+    {
+        try {
+            Log::info("Tentative d'annulation de la commande ID: {$orderId}");
+
+            // Chercher la commande
+            $order = Order::find($orderId);
+
+            if (!$order) {
+                Log::warning("Commande non trouvée. ID: {$orderId}");
+                return response()->json([
+                    'message' => 'Commande non trouvée.',
+                ], 404);
+            }
+
+            // Vérifier si la commande est déjà annulée
+            if ($order->status_orders === 'Annulée') {
+                Log::info("Commande déjà annulée. ID: {$orderId}");
+                return response()->json([
+                    'message' => 'Cette commande est déjà annulée.',
+                ], 400);
+            }
+
+            // Mettre à jour le statut
+            $order->status_orders = 'Annulée';
+            $order->save();
+
+            Log::info("Commande annulée avec succès. ID: {$orderId}");
+
+            return response()->json([
+                'message' => 'Commande annulée avec succès.',
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Erreur lors de l'annulation de la commande ID: {$orderId} - " . $e->getMessage());
+
+            return response()->json([
+                'message' => 'Erreur lors de l\'annulation de la commande.',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    public function getRecentOrders($userId)
+{
+    try {
+        Log::info("[OrderController] Début getRecentOrders", ['user_id' => $userId]);
+
+        $orders = Order::with(['user', 'livreur'])
+            ->where('livreur_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get()
+            ->map(function ($order) {
+                return [
+                    'id' => $order->id,
+                    'montant' => $order->montant,
+                    'distance_km' => $order->distance_km,
+                    'depart_adresse' => $order->depart_adresse,
+                    'destination_adresse' => $order->destination_adresse,
+                    'created_at' => $order->created_at->toDateTimeString(),
+                    'user' => [
+                        'name' => $order->user->name ?? null,
+                        'image' => $order->user->image ?? null,
+                        'rating' => $order->user->rating ?? null,
+                    ],
+                    'livreur' => $order->livreur ? [
+                        'name' => $order->livreur->user->name ?? null,
+                    ] : null,
+                ];
+            });
+
+        Log::info("[OrderController] Commandes trouvées", ['count' => $orders->count()]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    } catch (\Exception $e) {
+        Log::error("[OrderController] Erreur", ['error' => $e->getMessage()]);
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+    public function updateStatus(Request $request, $orderId)
+    {
+        $validated = $request->validate([
+            'status' => ['required', Rule::in(['Acceptée', 'En cours', 'Terminée'])]
         ]);
 
-        return response()->json(['message' => 'Order cancelled successfully']);
+        try {
+            $order = Order::findOrFail($orderId);
+            
+            // Vérification de l'autorisation
+            if ($order->livreur_id != auth()->user()->livreur->id) {
+                return response()->json([
+                    'message' => 'Action non autorisée'
+                ], 403);
+            }
+
+            // Initialiser l'historique
+            $history = [];
+            if (!empty($order->historique_statut)) {
+                // Si c'est une chaîne JSON, décoder
+                if (is_string($order->historique_statut)) {
+                    $history = json_decode($order->historique_statut, true) ?? [];
+                } 
+                // Si c'est déjà un tableau, utiliser directement
+                elseif (is_array($order->historique_statut)) {
+                    $history = $order->historique_statut;
+                }
+            }
+
+            // Mettre à jour le statut
+            $order->status_orders = $validated['status'];
+            
+            // Mettre à jour le statut du livreur
+            $order->status_livreur = match($validated['status']) {
+                'Acceptée' => 'En route',
+                'En cours' => 'Arrivé',
+                'Terminée' => 'Livré',
+                default => $order->status_livreur
+            };
+
+            // Ajouter la nouvelle entrée à l'historique
+            $history[] = [
+                'status' => $validated['status'],
+                'date' => now()->toDateTimeString(),
+                'by' => 'livreur',
+            ];
+
+            // Sauvegarder l'historique
+            $order->historique_statut = $history;
+            
+            $order->save();
+
+            return response()->json([
+                'message' => 'Statut mis à jour avec succès',
+                'data' => $order
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Erreur mise à jour statut: " . $e->getMessage());
+            return response()->json([
+                'message' => 'Erreur lors de la mise à jour',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
+
+
+
+    public function setOrderInProgress(Order $order)
+{
+    try {
+        Log::info('Début de setOrderInProgress', ['order_id' => $order->id]);
+
+        if ($order->status_orders !== 'Acceptée') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Commande non dans un état accepté pour démarrer.',
+            ], 400);
+        }
+
+        $order->status_orders = 'En cours';
+        $order->save();
+
+        Log::info('Commande passée en cours', ['order_id' => $order->id]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Commande mise en cours avec succès.',
+            'order' => $order,
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Erreur setOrderInProgress', [
+            'order_id' => $order->id,
+            'error' => $e->getMessage(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur serveur lors de la mise en cours.',
+        ], 500);
+    }
+}
 }

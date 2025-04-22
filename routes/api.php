@@ -46,19 +46,31 @@ use Illuminate\Support\Facades\Route;
         Route::prefix('livreurs')->group(function () {
 
             Route::get('/info', [LivreurController::class,  'getLivreurInfo']);
-            Route::get('/orders', [OrderController::class, 'livreurOrders']);
 
             // Statistiques des commandes
             Route::get('/stats/{userId}', [LivreurController::class, 'getOrderStats']);
 
+            Route::get('/orders-by-status', [LivreurController::class, 'getOrdersByStatus']);
+
+            Route::post('/orders/{order}/status', [OrderController::class, 'updateStatus']);
+       
+
             // Commandes par statut
             Route::get('/orders', [LivreurController::class, 'getOrdersByStatus']);
 
-            // Annuler une commande
-            Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder']);
+            // Commandes recentes 5
+            Route::get('/recent-orders/{userId}', [OrderController::class, 'getRecentOrders']);
+
             
             // Statut du livreur en ligne pas en ligne
-            Route::post('/update-status', [LivreurController::class, 'updateStatus']);
+            Route::post('/update-status', [LivreurController::class, 'toggleStatus']);
+
+            // Annuler une commande
+            Route::post('/orders/{order}/cancel', [OrderController::class, 'cancelOrder']);
+
+
+            Route::post('/orders/{order}/encours', [OrderController::class, 'setOrderInProgress']);
+
 
         });
         

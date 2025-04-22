@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DemandeLivreur;
 use App\Models\Livreur;
 use App\Models\Order;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -134,7 +135,7 @@ class LivreurController extends Controller
         $stats = [
             'total' => Order::where('livreur_id', $livreur->id)->count(),
             'pending' => Order::where('livreur_id', $livreur->id)
-                            ->where('status_orders', 'En attente')
+                            ->where('status_orders', 'Assignée')
                             ->whereDate('created_at', $today)
                             ->count(),
             'in_progress' => Order::where('livreur_id', $livreur->id)
@@ -316,15 +317,15 @@ class LivreurController extends Controller
                 return response()->json(['error' => 'Livreur non trouvé'], 404);
             }
     
-            Log::info("[OrderController] Livreur trouvé", ['livreur_id' => $livreur->id]);
-    
-            $status = $request->query('status', 'pending');
+            $status = $request->query('status', 'assignee');
             $statusMapping = [
-                'pending' => 'En attente',
+                'assignee' => 'Assignée',
                 'completed' => 'Terminée',
                 'cancelled' => 'Annulée',
+                'failed' => 'Échouée',
                 'in_progress' => ['En cours', 'Acceptée']
             ];
+            
     
             if (!array_key_exists($status, $statusMapping)) {
                 Log::warning("[OrderController] Statut invalide reçu", ['status' => $status]);
@@ -333,7 +334,7 @@ class LivreurController extends Controller
     
             Log::info("[OrderController] Statut valide", ['status' => $status, 'mapping' => $statusMapping[$status]]);
     
-            $query = Order::with(['user', 'depart', 'destination'])
+            $query = Order::with(['user'])
                 ->where('livreur_id', $livreur->id);
     
             if ($status === 'in_progress') {
@@ -355,15 +356,15 @@ class LivreurController extends Controller
                     'client_phone' => $order->user->phone ?? $order->numero_destinateur,
                     'depart_adresse' => $order->depart_adresse,
                     'destination_adresse' => $order->destination_adresse,
-                    'depart_latitude' => $order->depart->latitude ?? null,
-                    'depart_longitude' => $order->depart->longitude ?? null,
-                    'destination_latitude' => $order->destination->latitude ?? null,
-                    'destination_longitude' => $order->destination->longitude ?? null,
+                    'depart_latitude' => $order->depart_lat ?? null,
+                    'depart_longitude' => $order->depart_long ?? null,
+                    'destination_latitude' => $order->destination_lat ?? null,
+                    'destination_longitude' => $order->destination_long ?? null,
                     'montant' => $order->montant,
                     'status_orders' => $order->status_orders,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
                     'rating' => $order->rating ?? 0,
-                    'total_ratings' => $order->user->ratings()->count() ?? 0,
+                    //'total_ratings' => $order->user->ratings()->count() ?? 0,
                     'numero_destinateur' => $order->numero_destinateur,
                 ];
             });
@@ -472,4 +473,56 @@ class LivreurController extends Controller
             'message' => 'Image de profil mise à jour avec succès'
         ]);
     }
+
+    public function toggleStatus(Request $request)
+    {
+        Log::info('[toggleStatus] Début de la requête.', [
+            'user_id' => $request->user_id,
+            'status_reçu' => $request->status
+        ]);
+
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'status' => 'required|in:Actif,Inactif',
+        ]);
+
+        $user = User::find($request->user_id);
+
+        if (!$user) {
+            Log::warning('[toggleStatus] Utilisateur non trouvé.', ['user_id' => $request->user_id]);
+            return response()->json([
+                'message' => 'Utilisateur non trouvé.',
+            ], 404);
+        }
+
+        Log::info('[toggleStatus] Utilisateur trouvé.', ['user_id' => $user->id]);
+
+        $livreur = $user->livreur;
+
+        if (!$livreur) {
+            Log::warning('[toggleStatus] Livreur non trouvé pour cet utilisateur.', ['user_id' => $user->id]);
+            return response()->json([
+                'message' => 'Livreur non trouvé pour cet utilisateur.',
+            ], 404);
+        }
+
+        Log::info('[toggleStatus] Livreur trouvé.', ['livreur_id' => $livreur->id, 'ancien_status' => $livreur->status]);
+
+        // Mise à jour du statut
+        $livreur->status = $request->status;
+        $livreur->save();
+
+        Log::info('[toggleStatus] Statut du livreur mis à jour.', [
+            'livreur_id' => $livreur->id,
+            'nouveau_status' => $livreur->status
+        ]);
+
+        return response()->json([
+            'message' => 'Statut du livreur mis à jour avec succès.',
+            'new_status' => $livreur->status,
+        ], 200);
+    }
+
+
+    
 }

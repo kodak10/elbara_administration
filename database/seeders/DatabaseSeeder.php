@@ -6,6 +6,7 @@ use App\Models\Livreur;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\Order;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,18 +17,19 @@ class DatabaseSeeder extends Seeder
     {
 
 
-       
+        $this->call(OrderSeeder::class);
 
-        $this->call([
-            //CompanySeeder::class,
-            //GareSeeder::class,
-            //CompanyGareSeeder::class,
-            RolesSeeder::class,
-            UsersWithRolesSeeder::class,
-            //OrdersTableSeeder::class,
-            //LivreurSeeder::class,
 
-        ]);
+        // $this->call([
+        //     //CompanySeeder::class,
+        //     //GareSeeder::class,
+        //     //CompanyGareSeeder::class,
+        //     RolesSeeder::class,
+        //     UsersWithRolesSeeder::class,
+        //     //OrdersTableSeeder::class,
+        //     //LivreurSeeder::class,
+
+        // ]);
 
     }
 }

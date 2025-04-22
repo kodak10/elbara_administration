@@ -17,6 +17,8 @@ class Livreur extends Model
         'numero_telephone', 
         'lieu_residence', 
         'informations_complementaires', 
+        'status', 
+
         // Ajoutez d'autres colonnes que vous souhaitez permettre l'assignation en masse
     ];
 
