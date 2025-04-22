@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
     {
 
 
-        $this->call(OrderSeeder::class);
+       
 
 
         $this->call([
@@ -27,9 +27,10 @@ class DatabaseSeeder extends Seeder
             RolesSeeder::class,
             UsersWithRolesSeeder::class,
             //OrdersTableSeeder::class,
-            //LivreurSeeder::class,
-
+            LivreurSeeder::class,
+            OrderSeeder::class
         ]);
 
+       
     }
 }
