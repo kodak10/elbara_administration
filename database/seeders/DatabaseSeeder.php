@@ -20,16 +20,16 @@ class DatabaseSeeder extends Seeder
         $this->call(OrderSeeder::class);
 
 
-        // $this->call([
-        //     //CompanySeeder::class,
-        //     //GareSeeder::class,
-        //     //CompanyGareSeeder::class,
-        //     RolesSeeder::class,
-        //     UsersWithRolesSeeder::class,
-        //     //OrdersTableSeeder::class,
-        //     //LivreurSeeder::class,
+        $this->call([
+            //CompanySeeder::class,
+            //GareSeeder::class,
+            //CompanyGareSeeder::class,
+            RolesSeeder::class,
+            UsersWithRolesSeeder::class,
+            //OrdersTableSeeder::class,
+            //LivreurSeeder::class,
 
-        // ]);
+        ]);
 
     }
 }
