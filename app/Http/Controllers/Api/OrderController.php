@@ -58,7 +58,7 @@ class OrderController extends Controller
             ]);
 
             // Génération d'une référence de commande unique
-            $reference = 'CMD-' . Carbon::now()->format('Ymd') . '-' . Str::upper(Str::random(4));
+            $reference = Carbon::now()->format('Ymd') . '-' . Str::upper(Str::random(4));
             
             // Création de la commande avec valeurs par défaut
             $order = Order::create([
