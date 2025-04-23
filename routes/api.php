@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\LivreurController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\UserController;
@@ -71,6 +72,18 @@ use Illuminate\Support\Facades\Route;
 
             Route::post('/orders/{order}/encours', [OrderController::class, 'setOrderInProgress']);
 
+
+        });
+
+
+
+        Route::prefix('clients')->group(function () {
+
+            Route::get('/info', [ClientController::class,  'getClientInfo']);
+
+            Route::get('/orders', [ClientController::class, 'getUserOrders']);
+            Route::get('/orders/{id}', [ClientController::class, 'getOrderDetails']);
+            Route::post('/orders/{id}/cancel', [ClientController::class, 'cancelOrder']);
 
         });
         

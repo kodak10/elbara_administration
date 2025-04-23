@@ -7,6 +7,7 @@ use App\Models\Livreur;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class UserController extends Controller
 {
@@ -17,14 +18,15 @@ class UserController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'phone_number' => 'nullable|string|max:20',
+            'phone_number' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
         ]);
 
         // Mise à jour des infos de l'utilisateur
         $user->update([
             'name' => $request->name,
-            'phone_number' => $request->phone_number,
+            'phone_number' => Str::start($request->phone_number, '225'),
+
             'email' => $request->email,
         ]);
 
@@ -40,7 +42,9 @@ class UserController extends Controller
             $livreur->update([
                 'nom' => $nom,
                 'prenoms' => $prenoms,
-                'numero_telephone' => $request->phone_number,
+                'numero_telephone' => Str::start($request->phone_number, '225'),
+
+
             ]);
         }
 
