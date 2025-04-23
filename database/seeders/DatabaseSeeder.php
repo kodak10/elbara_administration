@@ -27,8 +27,8 @@ class DatabaseSeeder extends Seeder
             RolesSeeder::class,
             UsersWithRolesSeeder::class,
             //OrdersTableSeeder::class,
-            LivreurSeeder::class,
-            OrderSeeder::class
+            //LivreurSeeder::class,
+            //OrderSeeder::class
         ]);
 
        

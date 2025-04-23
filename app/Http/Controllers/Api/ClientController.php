@@ -41,37 +41,46 @@ class ClientController extends Controller
      * Récupère les commandes de l'utilisateur authentifié
      */
     public function getUserOrders(Request $request)
-    {
-        $user = $request->user();
-        
-        $orders = Order::where('user_id', $user->id)
-            ->with(['livreur' => function($query) {
-                $query->select('id', 'nom', 'photo');
-            }])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($order) {
-                return [
-                    'id' => $order->id,
-                    'reference_commande' => $order->reference_commande,
-                    'depart_adresse' => $order->depart_adresse,
-                    'destination_adresse' => $order->destination_adresse,
-                    'montant' => $order->montant,
-                    'date' => $order->created_at->format('d/m/Y'),
-                    'time' => $order->created_at->format('H:i'),
-                    'status_orders' => $order->status_orders,
-                    'engin' => $order->engin,
-                    'livreur' => $order->livreur,
-                    'livreur_image' => $order->livreur ? $order->livreur->image : null,
-                    'rating' => $order->livreur ? $order->livreur->rating : null,
-                ];
-            });
+{
+    $user = $request->user();
+    Log::info('Utilisateur authentifié :', ['id' => $user->id, 'name' => $user->name ?? null]);
 
-        return response()->json([
-            'success' => true,
-            'orders' => $orders
-        ]);
-    }
+    $ordersQuery = Order::where('user_id', $user->id)
+        ->with(['livreur' => function($query) {
+            $query->select('id', 'nom', 'prenoms', 'photo');
+        }])
+        ->orderBy('created_at', 'desc');
+
+    Log::info('Requête de commandes SQL : ' . $ordersQuery->toSql(), $ordersQuery->getBindings());
+
+    $orders = $ordersQuery->get()->map(function ($order) {
+        Log::info('Commande récupérée :', ['id' => $order->id, 'référence' => $order->reference_commande]);
+
+        return [
+            'id' => $order->id,
+            'reference_commande' => $order->reference_commande,
+            'depart_adresse' => $order->depart_adresse,
+            'destination_adresse' => $order->destination_adresse,
+            'montant' => $order->montant,
+            'created_at' => $order->created_at->toIso8601String(),
+            'status_orders' => $order->status_orders,
+            'engin' => $order->engin,
+            'livreur' => $order->livreur ? [
+                'id' => $order->livreur->id,
+                'nom' => $order->livreur->nom,
+                'prenoms' => $order->livreur->prenoms,
+                'photo' => $order->livreur->photo ? asset('storage/'.$order->livreur->photo) : null
+            ] : null
+        ];
+    });
+
+    Log::info('Nombre total de commandes retournées : ' . $orders->count());
+
+    return response()->json([
+        'success' => true,
+        'orders' => $orders
+    ]);
+}
 
     /**
      * Récupère les détails d'une commande spécifique
