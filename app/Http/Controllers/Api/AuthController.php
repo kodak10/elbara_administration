@@ -342,7 +342,7 @@ public function verifyOtp(Request $request)
         $otp = $request->otp;
 
         // Vérification spéciale pour le numéro de test
-        if ($phone === '2250103810998' && $otp === '123456') {
+        if ($phone === '0101010101' && $otp === '123456') {
             Log::channel('otp')->info('Validation OTP test réussie', ['phone' => $phone]);
             
             $user = User::firstOrCreate(

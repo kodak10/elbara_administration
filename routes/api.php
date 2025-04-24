@@ -23,10 +23,10 @@ use Illuminate\Support\Facades\Route;
 
     // Authentification
     Route::post('/check-phone', [AuthController::class, 'checkPhone']);
-    Route::post('/register', [AuthController::class, 'register']);
     Route::post('/send-otp', [AuthController::class, 'sendOtp']);
     Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
     Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
+    Route::post('/register', [AuthController::class, 'register']);
 
     Route::post('/demande-livreur', [LivreurController::class, 'demandeLivreur']);
 
