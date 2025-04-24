@@ -25,7 +25,7 @@ class LivreurController extends Controller
                 'numero_telephone' => 'required|string|max:20',
                 'email' => 'required|email|max:255',
                 'lieu_residence' => 'nullable|string|max:255',
-                'image' => 'nullable|image', // nullable au cas où pas d'image
+                'image' => 'nullable|image|mimes:jpeg,png,jpg|max:4092', // nullable au cas où pas d'image
             ]);
 
             // Créer la demande sans l'image
