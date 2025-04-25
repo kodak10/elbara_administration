@@ -28,7 +28,7 @@ return new class extends Migration
             $table->integer('duree_minutes')->nullable();
             $table->string('reference_commande')->unique();
             $table->date('date');
-            $table->enum('engin', ['Moto', 'Taxi Moto', 'Camion', 'Tricycle']);
+            $table->enum('engin', ['Moto', 'Moto Taxi', 'Camion', 'Tricycle']);
             $table->enum('type_course', ['Course', 'Livraison', 'Expédition']);
             $table->enum('status_orders', ['En attente', 'Assignée', 'Acceptée', 'En cours', 'Arrivée', 'Terminée', 'Annulée', 'Échouée']);
             $table->enum('status_payment', ['Non payé', 'Payé']);
