@@ -84,33 +84,69 @@ private function normalizePhoneNumber($phone)
 }
 
 
+    // public function checkPhone(Request $request)
+    // {
+    //     Log::info('🔍 Début de la vérification du numéro de téléphone', [
+    //         'données_reçues' => $request->all()
+    //     ]);
+
+    //     $request->validate([
+    //         'phone' => 'required|string|min:8|max:10',
+    //     ]);
+
+    //     $phone = '225' . $request->phone;
+
+    //     Log::info('📞 Numéro reçu après validation : ' . $phone);
+
+
+    //     $userExists = User::where('phone_number', $phone)->exists();
+    //     Log::info('✅ Vérification existence : ', [
+    //         'phone' => $phone,
+    //         'exists' => $userExists
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Numéro vérifié',
+    //         'exists' => $userExists,
+    //     ], 200);
+    // }
+
     public function checkPhone(Request $request)
-    {
-        Log::info('🔍 Début de la vérification du numéro de téléphone', [
-            'données_reçues' => $request->all()
-        ]);
+{
+    Log::info('🔍 Début de la vérification du numéro de téléphone', [
+        'données_reçues' => $request->all()
+    ]);
 
-        $request->validate([
-            'phone' => 'required|string|min:8|max:10',
-        ]);
+    $request->validate([
+        'phone' => 'required|string|min:8|max:10',
+        'account_type' => 'required|in:user,livreur', // <- ajoute cette ligne
+    ]);
 
-        $phone = '225' . $request->phone;
+    $phone = '225' . $request->phone;
+    $accountType = $request->account_type;
 
-        Log::info('📞 Numéro reçu après validation : ' . $phone);
+    Log::info('📞 Numéro reçu après validation : ' . $phone . ' | Type de compte : ' . $accountType);
 
+    $userExists = User::where('phone_number', $phone)
+        ->whereHas('roles', function ($query) use ($accountType) {
+            $query->where('name', $accountType);
+        })
+        ->exists();
 
-        $userExists = User::where('phone_number', $phone)->exists();
-        Log::info('✅ Vérification existence : ', [
-            'phone' => $phone,
-            'exists' => $userExists
-        ]);
+    Log::info('✅ Vérification existence : ', [
+        'phone' => $phone,
+        'type' => $accountType,
+        'exists' => $userExists
+    ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Numéro vérifié',
-            'exists' => $userExists,
-        ], 200);
-    }
+    return response()->json([
+        'success' => true,
+        'message' => 'Numéro vérifié',
+        'exists' => $userExists,
+    ], 200);
+}
+
 
   
 
