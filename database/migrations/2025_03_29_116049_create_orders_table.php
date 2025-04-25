@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('destination_adresse')->nullable();
             $table->string('numero_destinateur')->nullable();
             $table->string('numero_destinataire')->nullable();
+            $table->string('libelle')->nullable();
             $table->decimal('montant', 10, 2);
             $table->decimal('distance_km', 5, 2)->nullable();
             $table->integer('duree_minutes')->nullable();
