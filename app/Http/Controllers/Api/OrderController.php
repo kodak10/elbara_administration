@@ -39,19 +39,19 @@ class OrderController extends Controller
                 'destination_adresse' => 'required|string|max:255',
                 
                 // Contacts
-                // 'numero_destinateur' => 'required|string|max:20',
-                // 'numero_destinataire' => 'required|string|max:20',
+                'numero_destinateur' => 'required|string|max:20',
+                'numero_destinataire' => 'required|string|max:20',
                 
                 // Informations course
                 'libelle' => 'nullable|string|max:255',
                 'montant' => 'required|numeric|min:0',
-                //'distance_km' => 'required|numeric|min:0',
+                'distance_km' => 'required|numeric|min:0',
                 'duree_minutes' => 'nullable|integer|min:0',
                 
                 // Sélections
-                'engin' => 'required|in:Moto,Camion,Tricycle',
+                'engin' => 'required|in:Moto,Taxi Moto,Moto Taxi,Camion,Tricycle',
                 'mode_payement' => 'required|in:Espèces,Mobile Money,Carte Bancaire',
-                'type_course' => 'nullable|in:Course,Livraison',
+                'type_course' => 'nullable|in:Course,Livraison,Expédition',
                 
                 // Instructions supplémentaires
                 'instructions' => 'nullable|string|max:500',
@@ -67,23 +67,30 @@ class OrderController extends Controller
                 'depart_long' => $validated['depart_long'],
                 'destination_lat' => $validated['destination_lat'],
                 'destination_long' => $validated['destination_long'],
+
                 'depart_adresse' => $validated['depart_adresse'],
                 'destination_adresse' => $validated['destination_adresse'],
-                // 'numero_destinateur' => $validated['numero_destinateur'],
-                // 'numero_destinataire' => $validated['numero_destinataire'],
+
+                'numero_destinateur' => $validated['numero_destinateur'],
+                'numero_destinataire' => $validated['numero_destinataire'],
+                'instructions' => $validated['instructions'] ?? null,
+
+
                 'libelle' => $validated['libelle'] ?? null,
                 'montant' => $validated['montant'],
-                'distance_km' =>  0,
                 //'duree_minutes' => $validated['duree_minutes'] ?? $this->calculateDuration($validated['distance_km']),
                 'reference_commande' => $reference,
                 'date' => now(),
-                'engin' => $validated['engin'],
-                'type_course' => $validated['type_course'] ?? 'Course',
+                
                 'status_orders' => 'En attente',
                 'status_payment' => 'Non payé',
                 'mode_payment' => $validated['mode_payement'], // Note: correction orthographique
-                'instructions' => $validated['instructions'] ?? null,
                 'status_livreur' => 'En attente',
+
+                'engin' => $validated['engin'],
+                'type_course' => $validated['type_course'],
+                'distance_km' =>  $validated['distance_km'] ?? 0.0,
+
             ]);
 
             return response()->json([
@@ -93,6 +100,7 @@ class OrderController extends Controller
             ], 201);
 
         } catch (ValidationException $e) {
+            Log::error('Erreur de validation: ' . json_encode($e->errors()));
             return response()->json([
                 'success' => false,
                 'message' => 'Erreur de validation',
