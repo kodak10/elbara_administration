@@ -7,6 +7,7 @@ use App\Models\OtpCode;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -111,71 +112,7 @@ private function normalizePhoneNumber($phone)
         ], 200);
     }
 
-    public function register(Request $request)
-    {
-        Log::channel('auth')->info('Début enregistrement utilisateur', [
-            'phone' => $request->phone,
-            'name' => $request->name,
-            'email' => $request->email
-        ]);
-
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'phone' => 'required|string|max:10|unique:users,phone_number',
-                'email' => 'required|string|email|max:255|unique:users,email'
-            ]);
-
-            $user = User::create([
-                'name' => $validated['name'],
-                'phone_number' => '225' . $validated['phone'],
-                'email' => $validated['email'],
-                'password' => Hash::make('225' . $validated['phone']),
-                'api_token' => null,
-            ]);
-
-            Log::channel('auth')->info('Utilisateur créé', ['user_id' => $user->id]);
-
-            // Assignation du rôle user avec Spatie
-            $user->assignRole('user');
-            Log::channel('auth')->info('Rôle user attribué', ['user_id' => $user->id]);
-
-            return response()->json([
-                'success' => true,
-                'user' => [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'phone_number' => $user->phone_number,
-                    'email' => $user->email,
-                    'roles' => $user->getRoleNames(),
-                ],
-                'token' => $user->createToken('auth_token')->plainTextToken,
-                'message' => 'Inscription réussie'
-            ], 201);
-
-        } catch (ValidationException $e) {
-            Log::channel('auth')->error('Erreur validation inscription', [
-                'errors' => $e->errors(),
-                'data' => $request->all()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur de validation',
-                'errors' => $e->errors()
-            ], 422);
-            
-        } catch (\Exception $e) {
-            Log::channel('auth')->error('Erreur inscription', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'data' => $request->all()
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Erreur lors de l\'inscription'
-            ], 500);
-        }
-    }
+  
 
     public function sendOtp(Request $request)
 {
@@ -341,17 +278,19 @@ public function verifyOtp(Request $request)
         $phone = '225' . $request->phone;
         $otp = $request->otp;
 
-        // Vérification spéciale pour le numéro de test
-        if ($phone === '0101010101' && $otp === '123456') {
+        // Vérification spéciale pour le numéro de test (à supprimer en production)
+        if ($phone === '2250101010101' && $otp === '123456') {
             Log::channel('otp')->info('Validation OTP test réussie', ['phone' => $phone]);
             
-            $user = User::firstOrCreate(
-                ['phone_number' => $phone],
-                [
-                    'name' => 'Utilisateur Test',
-                    'password' => Hash::make($phone)
-                ]
-            );
+            // On vérifie d'abord si l'utilisateur existe
+            $user = User::where('phone_number', $phone)->first();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Compte non trouvé, veuillez vous inscrire'
+                ], 404);
+            }
             
             $token = $user->createToken('auth_token')->plainTextToken;
             
@@ -378,13 +317,15 @@ public function verifyOtp(Request $request)
 
         $otpRecord->update(['verified' => true]);
         
-        $user = User::firstOrCreate(
-            ['phone_number' => $phone],
-            [
-                'name' => 'Utilisateur',
-                'password' => Hash::make($phone)
-            ]
-        );
+        // On ne crée plus automatiquement l'utilisateur ici
+        $user = User::where('phone_number', $phone)->first();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Compte non trouvé, veuillez vous inscrire'
+            ], 404);
+        }
         
         $token = $user->createToken('auth_token')->plainTextToken;
         
@@ -402,12 +343,113 @@ public function verifyOtp(Request $request)
         ]);
         return response()->json([
             'success' => false,
-            'message' => 'Erreur vérification'
+            'message' => 'Erreur vérification: ' . $e->getMessage()
         ], 500);
     }
 }
     
-   
+public function register(Request $request)
+{
+    Log::channel('auth')->info('Début enregistrement utilisateur', [
+        'phone' => substr($request->phone, 0, 3) . '******', // Masquage partiel
+        'name' => $request->name,
+        'email' => substr($request->email, 0, 3) . '******' // Masquage partiel
+    ]);
+
+    // Vérification renforcée avant création
+    $existingUser = User::where('phone_number', '225' . $request->phone)
+                       ->orWhere('email', $request->email)
+                       ->first();
+
+    if ($existingUser) {
+        Log::channel('auth')->warning('Tentative d\'enregistrement avec informations existantes', [
+            'existing_id' => $existingUser->id
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Un utilisateur avec ces informations existe déjà'
+        ], 409);
+    }
+
+    try {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255|regex:/^[\pL\s\-]+$/u', // Unicode pour accents
+            'phone' => [
+                'required',
+                'string',
+                'max:10',
+                'min:10',
+                'regex:/^[0-9]+$/',
+                function ($attribute, $value, $fail) {
+                    if (User::where('phone_number', '225'.$value)->exists()) {
+                        $fail('Ce numéro est déjà utilisé.');
+                    }
+                }
+            ],
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (User::where('email', $value)->exists()) {
+                        $fail('Cet email est déjà utilisé.');
+                    }
+                }
+            ]
+        ]);
+
+        // Transaction pour sécurité
+        DB::transaction(function () use ($validated, &$user) {
+            $user = User::create([
+                'name' => strip_tags($validated['name']),
+                'phone_number' => '225' . $validated['phone'],
+                'email' => strtolower($validated['email']),
+                'password' => Hash::make('225' . $validated['phone']),
+                'status' => 'actif',
+                'email_verified_at' => null, // À vérifier plus tard
+            ]);
+
+            $user->assignRole('user');
+        });
+
+        Log::channel('auth')->info('Utilisateur créé avec succès', ['user_id' => $user->id]);
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'phone_number' => $user->phone_number,
+                'email' => $user->email,
+                'roles' => $user->getRoleNames(),
+            ],
+            'token' => $user->createToken('auth_token')->plainTextToken,
+            'message' => 'Inscription réussie'
+        ], 201);
+
+    } catch (ValidationException $e) {
+        Log::channel('auth')->error('Erreur validation inscription', [
+            'errors' => $e->errors()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur de validation',
+            'errors' => $e->errors()
+        ], 422);
+        
+    } catch (\Exception $e) {
+        Log::channel('auth')->error('Erreur inscription', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de l\'inscription: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     public function getUser(Request $request)
     {
