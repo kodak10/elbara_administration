@@ -15,9 +15,18 @@ class DashboardController extends Controller
     //     $query->where('name', 'livreur');  
     // })->get();
 
+    // $livreurs = Livreur::whereHas('user.roles', function($query) {
+    //     $query->where('name', 'livreur');
+    // })->get();
+
     $livreurs = Livreur::whereHas('user.roles', function($query) {
         $query->where('name', 'livreur');
-    })->get();
+    })
+    ->whereHas('user', function($query) {
+        $query->where('status', 'Actif');  // Filtrer par le statut "Actif"
+    })
+    ->get();
+
     
 
     // Récupérer les commandes en cours / en attente

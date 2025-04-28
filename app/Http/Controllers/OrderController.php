@@ -14,9 +14,18 @@ class OrderController extends Controller
     // $livreurs = Livreur::whereHas('roles', function($query) {
     //     $query->where('name', 'livreur');  
     // })->get();
+    // $livreurs = Livreur::whereHas('user.roles', function($query) {
+    //     $query->where('name', 'livreur');
+    // })->get();
+
     $livreurs = Livreur::whereHas('user.roles', function($query) {
         $query->where('name', 'livreur');
-    })->get();
+    })
+    ->whereHas('user', function($query) {
+        $query->where('status', 'Actif');  // Filtrer par le statut "Actif"
+    })
+    ->get();
+
     
 
     //$livreurs = User::get();

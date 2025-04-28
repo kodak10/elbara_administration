@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('type')->nullable(); 
             $table->string('lieu_residence')->nullable();
             $table->string('photo')->nullable(); 
-            $table->string('status')->default('actif'); 
+            $table->string('status')->default('Actif'); 
             $table->text('informations_complementaires')->nullable(); 
             $table->boolean('approuve')->default(false); 
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');

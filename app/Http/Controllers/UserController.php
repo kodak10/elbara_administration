@@ -80,7 +80,7 @@ class UserController extends Controller
         // Définir le mot de passe par défaut
         $user->password = bcrypt('Elbara2025'); // Mot de passe par défaut
         $user->phone_number = $request->phone_number;
-        $user->status = "actif";
+        $user->status = "Actif";
     
         // Ajouter le rôle
         $user->assignRole($request->role);
@@ -96,7 +96,7 @@ class UserController extends Controller
         $user = User::findOrFail($id);
 
         // Inverser le statut de l'utilisateur (actif -> inactif ou inactif -> actif)
-        $user->status = ($user->status === 'actif') ? 'inactif' : 'actif';
+        $user->status = ($user->status === 'Actif') ? 'Inactif' : 'Actif';
 
         // Sauvegarder les modifications
         $user->save();

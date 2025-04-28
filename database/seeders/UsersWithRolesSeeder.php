@@ -25,7 +25,7 @@ class UsersWithRolesSeeder extends Seeder
                 'email' => 'superadmin@example.com',
                 'password' => 'Elbara2025',
                 'phone_number' => '0123456789',
-                'status' => 'actif',
+                'status' => 'Actif',
                 'role' => 'superAdmin',
             ],
             [
@@ -33,7 +33,7 @@ class UsersWithRolesSeeder extends Seeder
                 'email' => 'admin@example.com',
                 'password' => 'Elbara2025',
                 'phone_number' => '0123456789',
-                'status' => 'actif',
+                'status' => 'Actif',
                 'role' => 'admin',
             ],
             [
@@ -41,7 +41,7 @@ class UsersWithRolesSeeder extends Seeder
                 'email' => 'manager@example.com',
                 'password' => 'Elbara2025',
                 'phone_number' => '0123456789',
-                'status' => 'actif',
+                'status' => 'Actif',
                 'role' => 'manager',
             ],
            

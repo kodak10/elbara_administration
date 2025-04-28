@@ -75,7 +75,7 @@ class LivreurController extends Controller
         'email' => $demandeLivreur->email,  // Email de la demande
         'password' => Hash::make($demandeLivreur->numero_telephone),
         'phone_number' => '225' . $demandeLivreur->numero_telephone,
-        'status' => 'actif',  // Status actif par défaut
+        'status' => 'Actif',  // Status actif par défaut
     ]);
     
     // Assigner le rôle "livreur" à l'utilisateur
@@ -91,7 +91,7 @@ class LivreurController extends Controller
         'lieu_residence' => $demandeLivreur->lieu_residence,
         'informations_complementaires' => $demandeLivreur->informations_complementaires,
         'type' => $demandeLivreur->type,  // Externe ou Interne
-        'status' => 'actif',  // Statut par défaut du livreur
+        'status' => 'Actif',  // Statut par défaut du livreur
     ]);
 
     // Supprimer la demande une fois qu'elle a été approuvée
@@ -132,7 +132,7 @@ public function store(Request $request)
         'name' => $request->prenoms . ' ' . $request->nom,
         'phone_number' => $numero_telephone,
         'password' => Hash::make($numero_telephone),
-        'status' => "actif",
+        'status' => "Actif",
         'image' => 'storage/app/public/images/profile-default.webp', // Ajouter l'image par défaut
     ]);
 
@@ -207,7 +207,7 @@ public function store(Request $request)
 
         if ($user) {
             // Inverser le statut du livreur
-            $user->status = $user->status == 'actif' ? 'inactif' : 'actif';
+            $user->status = $user->status == 'Actif' ? 'Inactif' : 'Actif';
             $user->save();
         }
 

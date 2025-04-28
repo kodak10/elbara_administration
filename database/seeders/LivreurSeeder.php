@@ -27,7 +27,7 @@ class LivreurSeeder extends Seeder
                 'name' => $faker->firstName . ' ' . $faker->lastName,
                 'phone_number' => $phoneNumber,
                 'password' => Hash::make('password'), // un mot de passe par défaut
-                'status' => 'actif',
+                'status' => 'Actif',
                 'image' => 'storage/app/public/images/profile-default.webp',
             ]);
 
@@ -44,7 +44,7 @@ class LivreurSeeder extends Seeder
                 'numero_telephone' => $phoneNumber,
                 'lieu_residence' => $faker->address,
                 'informations_complementaires' => $faker->sentence,
-                'status' => $faker->randomElement(['actif', 'inactif']),
+                'status' => $faker->randomElement(['Actif', 'Inactif']),
             ]);
         }
     }

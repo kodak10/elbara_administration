@@ -443,7 +443,7 @@ public function register(Request $request)
                 'phone_number' => '225' . $validated['phone'],
                 'email' => strtolower($validated['email']),
                 'password' => Hash::make('225' . $validated['phone']),
-                'status' => 'actif',
+                'status' => 'Actif',
                 'email_verified_at' => null, // À vérifier plus tard
             ]);
 

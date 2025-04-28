@@ -278,7 +278,7 @@ class LivreurController extends Controller
         try {
             $validated = $request->validate([
                 'livreur_id' => 'required|exists:livreurs,id',
-                'status' => 'required|in:actif,inactif'
+                'status' => 'required|in:Actif,Inactif'
             ]);
 
             $livreur = Livreur::find($validated['livreur_id']);
