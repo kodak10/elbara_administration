@@ -4,12 +4,14 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClientController;
 use App\Http\Controllers\Api\LivreurController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\PartenaireController;
 use App\Http\Controllers\Api\UserController;
 use App\Models\Livreur;
 use App\Models\Order;
 use Database\Seeders\LivreurSeeder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -40,7 +42,8 @@ use Illuminate\Support\Facades\Route;
 
         Route::post('/update-profile-image', [UserController::class, 'updateProfileImage']);
 
-    
+        Route::get('/partenaires', [PartenaireController::class, 'index']);
+
         // Gestion des commandes
         Route::post('/orders', [OrderController::class, 'store']);
 

@@ -217,7 +217,7 @@
                           Marketing
                         </a>
                         <a class="dropdown-item" href="#"> Promotions </a>
-                        <a class="dropdown-item" href="#">Partenaires </a>
+                        <a class="dropdown-item" href="{{ route('partenaires.index') }}">Partenaires </a>
 
                         <a class="dropdown-item" href="#">Statistiques (Nombre sms, nombre client, nombre livreurs, exportation des données) </a>
 

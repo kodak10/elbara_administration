@@ -29,6 +29,8 @@ class DatabaseSeeder extends Seeder
             //OrdersTableSeeder::class,
             //LivreurSeeder::class,
             //OrderSeeder::class
+            PartenaireSeeder::class,
+
         ]);
 
        

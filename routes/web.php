@@ -7,6 +7,7 @@ use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\GareController;
 use App\Http\Controllers\LivreurController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -52,6 +53,7 @@ Route::post('/profil', [UserController::class, 'updateProfile'])->name('profil.u
 
 Route::get('/activity', [ActivityController::class, 'index'])->name('activity.index');
 
+Route::resource('partenaires', PartenaireController::class);
 
 
 Route::get('/services', function () {
