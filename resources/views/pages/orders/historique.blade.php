@@ -43,7 +43,6 @@
                                 <tr>
                                     <th class="w-1"><input class="form-check-input m-0 align-middle" type="checkbox" aria-label="Select all orders"></th>
                                     <th>No.</th>
-                                    <th>Libellé</th>
                                     <th>Client</th>
                                     <th>Départ</th>
                                     <th>Destination</th>
@@ -58,7 +57,6 @@
                                 <tr>
                                     <td><input class="form-check-input m-0 align-middle table-selectable-check" type="checkbox"></td>
                                     <td>{{ $order->id }}</td>
-                                    <td>{{ $order->libelle }}</td>
                                     <td>{{ $order->user->name ?? 'N/A' }}</td>
                                     <td>{{ $order->depart_adresse }}</td>
                                     <td>{{ $order->destination_adresse }}</td>
@@ -81,7 +79,6 @@
                                             <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">Actions</button>
                                             <div class="dropdown-menu dropdown-menu-end">
                                                 <a class="dropdown-item" href="{{ route('orders.show', $order->id) }}">Voir</a>
-                                                <a class="dropdown-item" href="#">Annuler</a>
                                             </div>
                                         </span>
                                     </td>

@@ -31,9 +31,12 @@ class FinanceController extends Controller
     Log::info('Dates après traitement', ['start_date' => $startDate, 'end_date' => $endDate]);
 //dd($startDate, $endDate);
     // Récupérer les commandes des livreurs pendant la période
-    $orders = Order::whereBetween('date', [$startDate, $endDate])
-                    ->whereNotNull('livreur_id')
-                    ->get();
+    $orders = Order::whereBetween('created_at', [$startDate, $endDate])
+    ->whereNotNull('livreur_id')
+    ->where('status_orders', 'Terminée')
+    ->where('status_payment', 'Payé')
+    ->get();
+
                 //dd($orders);
 
     Log::info('Commandes récupérées pour la période', ['order_count' => $orders->count()]);

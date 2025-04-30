@@ -47,7 +47,7 @@
                         <table class="table table-vcenter table-mobile-md card-table">
                             <thead>
                                 <tr>
-                                    <th>Date</th>
+                                    {{-- <th>Date</th> --}}
                                     <th>Code</th>
                                     <th>Livreur</th>
                                     <th>Montant Total</th>
@@ -56,13 +56,13 @@
                             <tbody>
                                 @foreach ($livreurs as $livreur)
                                     <tr>
-                                        <td data-label="Date">
+                                        {{-- <td data-label="Date">
                                             <div class="d-flex py-1 align-items-center">
                                                 <div class="flex-fill">
-                                                    <div class="font-weight-medium"></div>
+                                                    <div class="font-weight-medium">{{ \Carbon\Carbon::parse($livreur['created_at'])->format('d/m/Y') }}</div>
                                                 </div>
                                             </div>
-                                        </td>
+                                        </td> --}}
                                         <td data-label="Code">
                                             <div class="d-flex py-1 align-items-center">
                                                 <div class="flex-fill">
