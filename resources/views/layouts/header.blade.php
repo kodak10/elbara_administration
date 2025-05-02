@@ -206,19 +206,17 @@
                         <path d="M16 5.25l-8 4.5"></path>
                       </svg>
                     </span>
-                    <span class="nav-link-title"> Marketing & Promotions </span>
+                    <span class="nav-link-title"> Slides & Partenaires </span>
                   </a>
                   <div class="dropdown-menu">
                     <div class="dropdown-menu-columns">
                       <div class="dropdown-menu-column">
-                        <a class="dropdown-item" href="#">
-                           
+                        <a class="dropdown-item" href="{{ route('marketings.index') }}">
                           Marketing
                         </a>
-                        <a class="dropdown-item" href="#"> Promotions </a>
                         <a class="dropdown-item" href="{{ route('partenaires.index') }}">Partenaires </a>
 
-                        <a class="dropdown-item" href="#">Statistiques (Nombre sms, nombre client, nombre livreurs, exportation des données) </a>
+                        {{-- <a class="dropdown-item" href="#">Statistiques (Nombre sms, nombre client, nombre livreurs, exportation des données) </a> --}}
 
                        
                        

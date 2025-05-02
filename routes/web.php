@@ -6,10 +6,12 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\GareController;
 use App\Http\Controllers\LivreurController;
+use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
 
 Route::get('/', function () {
     return view('pages.login');
@@ -65,7 +67,10 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     
     // Partenaires
     Route::resource('partenaires', PartenaireController::class);
-    
+
+    // Partenaires
+    Route::resource('marketings', MarketingController::class);
+
     // Services
     Route::get('/services', function () {
         return view('pages.services.index');

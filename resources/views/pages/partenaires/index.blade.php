@@ -40,7 +40,7 @@
                             </div>
                         </div>
                         <div class="d-flex">
-                            <a href="{{ route('partenaires.edit', $partenaire->id) }}" class="card-btn">
+                            <a href="#" class="card-btn" data-bs-toggle="modal" data-bs-target="#modal-edit-{{ $partenaire->id }}">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon me-2 text-muted icon-3">
                                     <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
                                     <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
@@ -61,6 +61,82 @@
                         </div>
                     </div>
                 </div>
+
+            <!-- Modal de modification -->
+            <div class="modal modal-blur fade" id="modal-edit-{{ $partenaire->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Modifier le partenaire</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ route('partenaires.update', $partenaire->id) }}" method="POST" enctype="multipart/form-data">
+                                @csrf
+                                @method('PUT')
+                                
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Nom</label>
+                                        <input type="text" name="name" class="form-control" required value="{{ old('name', $partenaire->name) }}">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Description courte</label>
+                                        <input type="text" name="short_description" class="form-control" required value="{{ old('short_description', $partenaire->short_description) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-lg-12">
+                                        <label class="form-label">Description complète</label>
+                                        <textarea name="description" class="form-control" rows="3">{{ old('description', $partenaire->description) }}</textarea>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Téléphone</label>
+                                        <input type="tel" name="phone" class="form-control" value="{{ old('phone', $partenaire->phone) }}">
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <label class="form-label">Email</label>
+                                        <input type="email" name="email" class="form-control" value="{{ old('email', $partenaire->email) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-lg-12">
+                                        <label class="form-label">Adresse</label>
+                                        <input type="text" name="address" class="form-control" value="{{ old('address', $partenaire->address) }}">
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-lg-12">
+                                        <label class="form-label">Logo</label>
+                                        <input type="file" name="logo" class="form-control" accept="image/*">
+                                        @if($partenaire->logo_url)
+                                            <div class="mt-2">
+                                                <img src="{{ asset('storage/' . $partenaire->logo_url) }}" alt="Logo actuel" width="100" class="img-thumbnail">
+                                                <div class="form-check mt-2">
+                                                    <input class="form-check-input" type="checkbox" name="remove_logo" id="remove_logo_{{ $partenaire->id }}">
+                                                    <label class="form-check-label" for="remove_logo_{{ $partenaire->id }}">
+                                                        Supprimer le logo actuel
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                                <div class="modal-footer mt-3">
+                                    <button type="button" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal">
+                                        Annuler
+                                    </button>
+                                    <button type="submit" class="btn btn-primary btn-5 ms-auto">
+                                        Enregistrer
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             @endforeach
         </div>
     </div>
