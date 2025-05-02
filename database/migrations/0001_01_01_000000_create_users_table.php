@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->string('phone_number')->nullable();
             $table->enum('status', ['Actif', 'Inactif'])->default('Actif');
-            $table->string('image')->nullable();  
+            $table->string('image')->default('profile-default.webp');
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes(); 

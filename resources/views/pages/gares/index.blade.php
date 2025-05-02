@@ -48,7 +48,7 @@
                                           <div class="dropdown">
                                               <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">Actions</button>
                                               <div class="dropdown-menu dropdown-menu-end">
-                                                  <a class="dropdown-item" href="#">Modifier</a>
+                                                  <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modal-edit-gare-{{ $gare->id }}">Modifier</a>
                                                   <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modal-danger" data-company-id="{{ $gare->id }}">Supprimer</button>
 
                                               </div>
@@ -57,6 +57,70 @@
                                     </td>
                                     
                                 </tr>
+
+                                @foreach($gares as $gare)
+                                    <!-- Modal d'édition pour chaque gare -->
+                                    <div class="modal modal-blur fade" id="modal-edit-gare-{{ $gare->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                        <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Modification de Gare</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <form action="{{ route('gares.update', $gare->id) }}" method="POST">
+                                                        @csrf
+                                                        @method('PUT')
+
+                                                        <div class="row">
+                                                            <div class="col-lg-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Nom de la gare</label>
+                                                                    <input type="text" class="form-control" name="nom" value="{{ old('nom', $gare->nom) }}" required>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Compagnies</label>
+                                                                    <select class="form-select" name="compagnies[]">
+                                                                        @foreach($compagnies as $compagnie)
+                                                                            <option value="{{ $compagnie->id }}" {{ $gare->compagnies->contains($compagnie->id) ? 'selected' : '' }}>
+                                                                                {{ $compagnie->name }}
+                                                                            </option>
+                                                                        @endforeach
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Contact 1</label>
+                                                                    <input type="text" class="form-control" name="contact_01" value="{{ old('contact_01', $gare->contact_01) }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-6">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Contact 2</label>
+                                                                    <input type="text" class="form-control" name="contact_02" value="{{ old('contact_02', $gare->contact_02) }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-lg-12">
+                                                                <div class="mb-3">
+                                                                    <label class="form-label">Localisation</label>
+                                                                    <input type="text" class="form-control" name="localisation" value="{{ old('localisation', $gare->localisation) }}">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-footer">
+                                                            <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal">Annuler</a>
+                                                            <button type="submit" class="btn btn-primary btn-5 ms-auto">Enregistrer</button>
+                                                        </div>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             @endforeach
                         </tbody>
                     </table>
@@ -94,7 +158,9 @@
                         <div class="col-lg-6">
                             <div class="mb-3">
                                 <label class="form-label">Compagnies</label>
-                                <select name="compagnie_ids[]" class="form-select" multiple required>
+                               
+
+                                <select class="form-select @error('role') is-invalid @enderror" name="compagnie_ids[]" required>
                                     @foreach($compagnies as $compagnie)
                                         <option value="{{ $compagnie->id }}" 
                                             @if(in_array($compagnie->id, old('compagnie_ids', []))) selected @endif>

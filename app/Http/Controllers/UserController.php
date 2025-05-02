@@ -21,47 +21,68 @@ class UserController extends Controller
     }
 
     public function profil()
-    {
-        return view('pages.users.profil');
+{
+    $user = Auth::user();
+    return view('pages.users.profil', compact('user'));
+}
+
+public function updateProfile(Request $request)
+{
+    $user = Auth::user();
+
+    // Validation des données
+    $validated = $request->validate([
+        'name' => 'required|string|max:255',
+        'phone_number' => 'nullable|string|max:15',
+        'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+        'current_password' => 'required_with:password',
+        'password' => 'nullable|min:8|confirmed',
+    ]);
+
+    // Mise à jour de l'avatar
+    if ($request->hasFile('avatar')) {
+        // Supprimer l'ancien avatar s'il existe (sauf l'image par défaut)
+        if ($user->image && $user->image !== 'profile-default.webp' && Storage::disk('public')->exists($user->image)) {
+            Storage::disk('public')->delete($user->image);
+        }
+        
+        // Stocker le nouvel avatar
+        $path = $request->file('avatar')->store('avatars', 'public');
+        $user->image = $path;
     }
 
-    public function updateProfile(Request $request)
-    {
-        $user = Auth::user();
+    // Mise à jour des informations de base
+    $user->name = $validated['name'];
+    $user->phone_number = $validated['phone_number'];
 
-        // Validation des données
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'phone_number' => 'nullable|string|max:15',  // Ajout du champ numéro de téléphone
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'password' => 'nullable|min:8|confirmed',  // Validation du mot de passe
-            'current_password' => 'nullable|current_password', // Validation du mot de passe actuel (optionnel)
-        ]);
-
-        // Mise à jour de l'avatar si une nouvelle image est uploadée
-        if ($request->hasFile('avatar')) {
-            $avatarPath = $request->file('avatar')->store('avatars', 'public');
-            if ($user->image && Storage::exists($user->image)) {
-                Storage::delete($user->image);  // Supprimer l'ancien avatar
-            }
-            $user->image = $avatarPath;
+    // Mise à jour du mot de passe si fourni
+    if ($request->filled('password')) {
+        // Vérifier que le mot de passe actuel est correct
+        if (!Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'Le mot de passe actuel est incorrect']);
         }
+        
+        $user->password = Hash::make($validated['password']);
+    }
 
-        // Mise à jour des informations du profil
-        $user->name = $validated['name'];
-        $user->phone_number = $validated['phone_number'];
+    $user->save();
 
-        // Mise à jour du mot de passe si fourni
-        if ($request->filled('current_password') && $request->filled('password')) {
-            $user->password = Hash::make($validated['password']);
-        }
+    return back()->with('success', 'Profil mis à jour avec succès.');
+}
 
+public function destroyAvatar()
+{
+    $user = Auth::user();
+
+    // Ne pas supprimer si c'est déjà l'image par défaut
+    if ($user->image && $user->image !== 'profile-default.webp' && Storage::disk('public')->exists($user->image)) {
+        Storage::disk('public')->delete($user->image);
+        $user->image = 'profile-default.webp'; // Réinitialiser à l'image par défaut
         $user->save();
-
-        // Retourner à la vue de profil avec un message de succès
-        return redirect()->route('profil.edit')->with('success', 'Profil mis à jour avec succès.');
     }
+
+    return back()->with('success', 'Avatar réinitialisé avec succès');
+}
 
 
     public function store(Request $request)

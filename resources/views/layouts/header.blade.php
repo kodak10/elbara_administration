@@ -57,8 +57,7 @@
         <div class="nav-item dropdown">
           <a href="#" class="nav-link d-flex lh-1 p-0 px-2" data-bs-toggle="dropdown" aria-label="Open user menu">
             <!-- Avatar de l'utilisateur -->
-            <span class="avatar avatar-sm" style="background-image: url({{ Storage::url(auth()->user()->image ?? 'avatars/default-avatar.png') }})"></span>
-            <div class="d-none d-xl-block ps-2">
+            <span class="avatar avatar-sm" style="background-image: url({{ auth()->user()->image ? Storage::url(auth()->user()->image) : asset('storage/profile-default.webp') }})"></span>            <div class="d-none d-xl-block ps-2">
                 <!-- Nom de l'utilisateur -->
                 <div>{{ auth()->user()->name }}</div>
                 <div class="mt-1 small text-secondary">
@@ -73,7 +72,7 @@
         </a>
         
           <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
-            <a href="{{ route('profil.edit') }}" class="dropdown-item">Mon Profil</a>
+            <a href="{{ route('profil') }}" class="dropdown-item">Mon Profil</a>
             <div class="dropdown-divider"></div>
             <form action="{{ route('logout') }}" method="POST" style="display: inline;">
               @csrf

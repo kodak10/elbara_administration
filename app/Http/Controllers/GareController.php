@@ -29,7 +29,7 @@ class GareController extends Controller
             'contact_02' => 'nullable|string|max:255',
             'localisation' => 'required|string|max:255',
             'informations_complementaires' => 'nullable|string',
-            'compagnie_ids' => 'required|array'
+            'compagnie_ids' => 'required'
         ]);
 
 
@@ -48,6 +48,35 @@ class GareController extends Controller
         // Rediriger avec un message de succès
         return redirect()->route('gares.index')->with('success', 'Gare ajoutée avec succès.');
     }
+
+    public function update(Request $request, Gare $gare)
+{
+    $validated = $request->validate([
+        'nom' => 'required|string|max:255',
+        'contact_01' => 'nullable|string|max:20',
+        'contact_02' => 'nullable|string|max:20',
+        'localisation' => 'nullable|string',
+        'compagnies' => 'nullable|',
+        'compagnies.*' => 'exists:companies,id',
+    ]);
+
+    // Mise à jour des données de base
+    $gare->update([
+        'nom' => $validated['nom'],
+        'contact_01' => $validated['contact_01'],
+        'contact_02' => $validated['contact_02'],
+        'localisation' => $validated['localisation'],
+    ]);
+
+    // Synchronisation des compagnies (pour la relation many-to-many)
+    if ($request->has('compagnies')) {
+        $gare->compagnies()->sync($validated['compagnies']);
+    } else {
+        $gare->compagnies()->detach();
+    }
+
+    return redirect()->route('gares.index')->with('success', 'Gare mise à jour avec succès');
+}
 
     public function destroy($id)
     {

@@ -46,13 +46,68 @@
                                             <div class="dropdown">
                                                 <button class="btn dropdown-toggle align-text-top" data-bs-toggle="dropdown">Actions</button>
                                                 <div class="dropdown-menu dropdown-menu-end">
-                                                    <a class="dropdown-item" href="#"> Modifier </a>
+                                                    <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modal-edit-{{ $company->id }}">Modifier</a>
                                                     <button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#modal-danger" data-company-id="{{ $company->id }}">Supprimer</button>
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
                                 </tr>
+
+                                <!-- Modal d'édition pour chaque compagnie -->
+                                <div class="modal modal-blur fade" id="modal-edit-{{ $company->id }}" tabindex="-1" role="dialog" aria-hidden="true">
+                                    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Modification de Compagnie</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form action="{{ route('companies.update', $company->id) }}" method="POST" enctype="multipart/form-data">
+                                                    @csrf
+                                                    @method('PUT')
+
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Nom</label>
+                                                        <input type="text" class="form-control" name="name" value="{{ $company->name }}" required>
+                                                    </div>
+
+                                                    <div class="row">
+                                                        <div class="col-lg-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Email</label>
+                                                                <input type="email" class="form-control" name="email" value="{{ $company->email }}" required>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-6">
+                                                            <div class="mb-3">
+                                                                <label class="form-label">Logo</label>
+                                                                <input type="file" class="form-control" name="logo">
+                                                                @if($company->logo)
+                                                                    <small class="text-muted">Laisser vide pour conserver l'actuel</small>
+                                                                    <div class="mt-2">
+                                                                        <img src="{{ asset('storage/'.$company->logo) }}" alt="Logo actuel" width="100">
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-12">
+                                                            <div>
+                                                                <label class="form-label">Informations Complémentaires</label>
+                                                                <textarea class="form-control" name="additional_info" rows="3">{{ $company->additional_info }}</textarea>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <a href="#" class="btn btn-link link-secondary btn-3" data-bs-dismiss="modal">Annuler</a>
+                                                        <button type="submit" class="btn btn-primary btn-5 ms-auto">Enregistrer</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             @endforeach
                         </tbody>
                     </table>
