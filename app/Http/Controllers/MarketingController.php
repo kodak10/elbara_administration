@@ -21,7 +21,7 @@ class MarketingController extends Controller
             'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $path = $request->file('image')->store('partners', 'public');
+        $path = $request->file('image')->store('slides', 'public');
 
         Marketing::create([
             'name'  => $request->name,
@@ -47,7 +47,7 @@ class MarketingController extends Controller
             Storage::disk('public')->delete($marketing->image);
 
             // Stocker la nouvelle image
-            $path = $request->file('image')->store('partners', 'public');
+            $path = $request->file('image')->store('slides', 'public');
             $marketing->image = $path;
         }
 
