@@ -67,7 +67,9 @@
                                       </div>
                                       
                                       <div class="mb-3">
-                                          <label class="form-label">Image du Slide (laisser vide pour ne pas changer)</label>
+                                          <label class="form-label">Image du Slide (laisser vide pour ne pas changer) </label>
+                                          <label class="form-label">Dimenssion recommandée : 1112 x 588 </label>
+
                                           <input type="file" name="image" class="form-control" accept="image/*">
                                           @if($marketing->image)
                                               <div class="mt-2">
@@ -115,6 +117,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Image (obligatoire)</label>
+                        <label class="form-label">Dimenssion recommandée : 1112 x 588 </label>
                         <input type="file" name="image" class="form-control" accept="image/*" required>
                         @error('image')
                             <div class="text-danger">{{ $message }}</div>
