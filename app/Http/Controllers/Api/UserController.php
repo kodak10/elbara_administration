@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Livreur;
+use App\Models\Marketing;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -91,5 +92,21 @@ class UserController extends Controller
         ], 400);
     }
     
+    public function cards()
+    {
+        $cards = Marketing::all()->map(function($card) {
+            return [
+                'id' => $card->id,
+                'name' => $card->title,
+                'image' => $card->image_path, // Chemin relatif dans storage
+                // autres champs...
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $cards
+        ]);
+    }
     
 }

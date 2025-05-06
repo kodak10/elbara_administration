@@ -44,6 +44,9 @@ use Illuminate\Support\Facades\Route;
 
         Route::get('/partenaires', [PartenaireController::class, 'index']);
 
+        Route::get('/cards', [UserController::class, 'cards']);
+
+
         // Gestion des commandes
         Route::post('/orders', [OrderController::class, 'store']);
 
