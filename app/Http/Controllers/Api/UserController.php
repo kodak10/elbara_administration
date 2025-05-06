@@ -97,8 +97,8 @@ class UserController extends Controller
         $cards = Marketing::all()->map(function($card) {
             return [
                 'id' => $card->id,
-                'name' => $card->title,
-                'image' => $card->image_path, // Chemin relatif dans storage
+                'name' => $card->name,
+                'image' => $card->image, // Chemin relatif dans storage
                 // autres champs...
             ];
         });
