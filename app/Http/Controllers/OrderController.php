@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\OrderAssigned;
 use App\Models\Livreur;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -75,27 +77,56 @@ class OrderController extends Controller
     }
 
     public function assign(Request $request, $id)
-{
-    // Vérifier si le livreur existe dans la table 'livreurs'
-    $livreur = Livreur::find($request->livreur_id);
-    
-    if (!$livreur) {
-        dd($livreur);
-        return redirect()->route('orders.index')->with('error', 'Le livreur sélectionné n\'existe pas.');
+    {
+        // Vérifier si le livreur existe
+        $livreur = Livreur::find($request->livreur_id);
+        
+        if (!$livreur) {
+            return redirect()->route('orders.index')
+                           ->with('error', 'Le livreur sélectionné n\'existe pas.');
+        }
+
+        // Trouver et mettre à jour la commande
+        $order = Order::findOrFail($id);
+        $order->update([
+            'livreur_id' => $request->livreur_id,
+            'status_orders' => "Assignée"
+        ]);
+        
+        // Vérifier que livreur_id est bien défini
+        Log::info('Assignation du livreur', ['livreur_id' => $order->livreur_id]);
+        
+        // Déclenchement de l'événement
+        event(new OrderAssigned($order, $order->livreur_id));
+        
+
+
+        return redirect()->route('orders.index')
+                       ->with('success', 'Livreur affecté avec succès');
     }
 
-    // Trouver la commande par ID
-    $order = Order::findOrFail($id);
+//     public function assign(Request $request, $id)
+// {
+//     // Vérifier si le livreur existe dans la table 'livreurs'
+//     $livreur = Livreur::find($request->livreur_id);
+    
+//     if (!$livreur) {
+//         dd($livreur);
+//         return redirect()->route('orders.index')->with('error', 'Le livreur sélectionné n\'existe pas.');
+//     }
 
-    // Affecter le livreur sélectionné à la commande
-    $order->livreur_id = $request->livreur_id;
-    $order->status_orders = "Assignée";
+//     // Trouver la commande par ID
+//     $order = Order::findOrFail($id);
 
-    $order->save();
+//     // Affecter le livreur sélectionné à la commande
+//     $order->livreur_id = $request->livreur_id;
+//     $order->status_orders = "Assignée";
 
-    // Rediriger avec un message de succès
-    return redirect()->route('orders.index')->with('success', 'Livreur affecté avec succès');
-}
+//     $order->save();
+
+//     // Rediriger avec un message de succès
+//     return redirect()->route('orders.index')->with('success', 'Livreur affecté avec succès');
+// }
 
 
     public function cancel($id)

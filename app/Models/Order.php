@@ -64,6 +64,7 @@ class Order extends Model
         return $this->belongsTo(Livreur::class, 'livreur_id');
     }
 
+
     // Optionnel: Si tu as un modèle Admin pour la gestion
     public function admin()
     {

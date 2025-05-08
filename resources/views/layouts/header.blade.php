@@ -212,7 +212,7 @@
                     <div class="dropdown-menu-columns">
                       <div class="dropdown-menu-column">
                         <a class="dropdown-item" href="{{ route('marketings.index') }}">
-                          Marketing
+                          Slides
                         </a>
                         <a class="dropdown-item" href="{{ route('partenaires.index') }}">Partenaires </a>
 
@@ -245,6 +245,7 @@
                         <a class="dropdown-item" href="{{ route('companies.index') }}">Compagnies</a>
                         <a class="dropdown-item" href="{{ route('gares.index') }}"> Gares </a>
                         <a class="dropdown-item" href="/services"> Les Services </a>
+                        <a class="dropdown-item" href="{{ route('vehicles.index') }}"> Cout des commandes </a>
 
                        
                        

@@ -10,7 +10,11 @@ use App\Http\Controllers\MarketingController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PartenaireController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehicleTypeController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+
 
 
 Route::get('/', function () {
@@ -75,6 +79,9 @@ Route::middleware(['auth', 'active.user'])->group(function () {
     Route::get('/services', function () {
         return view('pages.services.index');
     });
+
+    Route::resource('vehicles', VehicleTypeController::class);
+
 });
 
 
@@ -83,3 +90,6 @@ Auth::routes();
 // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 
+Route::post('/broadcasting/auth', function() {
+    return Broadcast::auth(request());
+})->middleware('auth:sanctum');

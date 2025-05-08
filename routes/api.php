@@ -6,12 +6,17 @@ use App\Http\Controllers\Api\LivreurController;
 use App\Http\Controllers\Api\OrderController;
 use App\Http\Controllers\Api\PartenaireController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\VehicleTypeController;
 use App\Models\Livreur;
 use App\Models\Order;
 use Database\Seeders\LivreurSeeder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Broadcast;
 
+
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Route;
 
 
 
@@ -91,8 +96,38 @@ use Illuminate\Support\Facades\Route;
             Route::get('/orders/{id}', [ClientController::class, 'getOrderDetails']);
             Route::post('/orders/{id}/cancel', [ClientController::class, 'cancelOrder']);
 
+            Route::get('vehicule-types', [VehicleTypeController::class, 'list']);
+
+
         });
+
+
+       
         
     });
+
+
+    Route::post('/broadcasting/auth', function(Request $request) {
+        if (!auth()->check()) {
+            Log::error('[PUSHER] Échec : utilisateur non authentifié');
+            return response()->json(['error' => 'Non autorisé'], 403);
+        }
+    
+        try {
+            $authResponse = Broadcast::auth($request);
+    
+            if (!isset($authResponse['auth']) || !str_contains($authResponse['auth'], ':')) {
+                Log::error('[PUSHER] Format d\'authentification invalide', ['response' => $authResponse]);
+                return response()->json(['error' => 'Format incorrect'], 500);
+            }
+    
+            return response()->json($authResponse);
+        } catch (Exception $e) {
+            Log::error('[PUSHER] Erreur d\'authentification :', ['message' => $e->getMessage()]);
+            return response()->json(['error' => 'Erreur serveur'], 500);
+        }
+    })->middleware('auth:sanctum');
+    
+    
 
 
