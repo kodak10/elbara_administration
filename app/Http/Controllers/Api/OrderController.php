@@ -4,14 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\QrCodeService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 
 class OrderController extends Controller
@@ -60,6 +62,9 @@ class OrderController extends Controller
             // Génération d'une référence de commande unique
             $reference = Carbon::now()->format('Ymd') . '-' . Str::upper(Str::random(4));
             
+            // Génération d'un code aléatoire à 4 chiffres
+            $code = mt_rand(1000, 9999);
+            
             // Création de la commande avec valeurs par défaut
             $order = Order::create([
                 'user_id' => $validated['user_id'],
@@ -91,12 +96,60 @@ class OrderController extends Controller
                 'type_course' => $validated['type_course'],
                 'distance_km' =>  $validated['distance_km'] ?? 0.0,
 
+                'code' => $code,
+
+            ]);
+
+            // return response()->json([
+            //     'success' => true,
+            //     'order' => $order,
+            //     'message' => 'Commande créée avec succès'
+            // ], 201);
+
+            $paymentResponse = $this->initiatePayDunyaPayment($order);
+
+            if (!$paymentResponse['success']) {
+                // Supprimez la commande créée car le paiement a échoué
+                $order->delete();
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => $paymentResponse['message'] ?? 'Échec de la création du paiement',
+                    'payment_response' => $paymentResponse['response'] ?? null // Optionnel
+                ], 400);
+            }
+
+            // Génération et sauvegarde du QR code
+            try {
+                $qrCodeService = new QrCodeService();
+                $qrCodePath = $qrCodeService->generateForOrder(
+                    $order->id, 
+                    $paymentResponse['payment_url']
+                );
+            } catch (\Exception $e) {
+                Log::error('QR code generation failed: '.$e->getMessage());
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paiement créé mais échec de génération du QR code',
+                    'payment_url' => $paymentResponse['payment_url'],
+                    'order' => $order
+                ], 201); // Ou 500 selon votre préférence
+            }
+
+            // Mise à jour de la commande
+            $order->update([
+                'qr_code_path' => $qrCodePath,
+                'payment_reference' => $paymentResponse['reference'],
+                'status_payment' => 'En attente' // Mettez à jour le statut
             ]);
 
             return response()->json([
                 'success' => true,
                 'order' => $order,
-                'message' => 'Commande créée avec succès'
+                'payment_url' => $paymentResponse['payment_url'],
+                'qr_code_url' => Storage::url($qrCodePath),
+                'message' => 'Commande et QR code créés avec succès'
             ], 201);
 
         } catch (ValidationException $e) {
@@ -113,6 +166,67 @@ class OrderController extends Controller
                 'message' => 'Échec de la création de commande',
                 'error' => env('APP_DEBUG') ? $e->getMessage() : null
             ], 500);
+        }
+    }
+
+    private function initiatePayDunyaPayment($order)
+    {
+        $client = new \GuzzleHttp\Client();
+        
+        try {
+            $response = $client->post('https://app.paydunya.com/api/v1/dmp-api', [
+                'headers' => [
+                    'Content-Type' => 'application/json',
+                    'PAYDUNYA-MASTER-KEY' => config('services.paydunya.master_key'),
+                    'PAYDUNYA-PRIVATE-KEY' => config('services.paydunya.private_key'),
+                    'PAYDUNYA-TOKEN' => config('services.paydunya.token'),
+                ],
+                'json' => [
+                    "recipient_phone" => $order->numero_destinateur,
+                    "amount" => $order->montant,
+                    "support_fees" => 1,
+                    "send_notification" => 0,
+                    "custom_data" => [
+                        "order_id" => $order->id,
+                        "reference" => $order->reference_commande
+                    ]
+                ],
+                'http_errors' => false // Pour éviter les exceptions sur les réponses 4xx/5xx
+            ]);
+    
+            $data = json_decode($response->getBody(), true);
+    
+            // Vérifiez que la réponse est bien formatée
+            if (!isset($data['response-code']) || $data['response-code'] !== '00') {
+                Log::error('PayDunya API error response', $data);
+                return [
+                    'success' => false,
+                    'message' => $data['description'] ?? 'Erreur inconnue de PayDunya'
+                ];
+            }
+    
+            // Vérifiez que les champs requis existent
+            if (empty($data['url']) || empty($data['reference_number'])) {
+                Log::error('PayDunya missing required fields', $data);
+                return [
+                    'success' => false,
+                    'message' => 'Réponse PayDunya incomplète'
+                ];
+            }
+    
+            return [
+                'success' => true,
+                'payment_url' => $data['url'],
+                'reference' => $data['reference_number'],
+                'response' => $data // Optionnel - pour le débogage
+            ];
+    
+        } catch (\Exception $e) {
+            Log::error('PayDunya request failed: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Erreur de connexion à PayDunya'
+            ];
         }
     }
 

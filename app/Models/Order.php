@@ -1,10 +1,11 @@
 <?php
 namespace App\Models;
 
+use App\Models\Traits\ActivityLogger;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
-use App\Models\Traits\ActivityLogger;
+use Illuminate\Support\Facades\Storage;
 
 class Order extends Model
 {
@@ -34,7 +35,12 @@ class Order extends Model
         'livreur_id',
         'admin_id',
         'notation',
-        'historique_statut'
+        'historique_statut',
+        'qr_code_path',
+        'payment_reference',
+        'payment_url',
+        'qr_code_url',
+        'code',
     ];
 
     protected $casts = [
@@ -69,5 +75,10 @@ class Order extends Model
     public function admin()
     {
         return $this->belongsTo(User::class, 'admin_id');
+    }
+
+    public function getQrCodeUrlAttribute()
+    {
+        return $this->qr_code_path ? Storage::url($this->qr_code_path) : null;
     }
 }

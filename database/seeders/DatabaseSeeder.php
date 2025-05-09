@@ -24,13 +24,13 @@ class DatabaseSeeder extends Seeder
             //CompanySeeder::class,
             //GareSeeder::class,
             //CompanyGareSeeder::class,
-            //RolesSeeder::class, // Obligatoire
-            //UsersWithRolesSeeder::class, // Obligatoire
+            RolesSeeder::class, // Obligatoire
+            UsersWithRolesSeeder::class, // Obligatoire
             //OrdersTableSeeder::class,
             //LivreurSeeder::class,
             //OrderSeeder::class
             //PartenaireSeeder::class,
-            VehiculeTypeSeeder::class,
+            VehiculeTypeSeeder::class, // Obligatoire
 
 
         ]);

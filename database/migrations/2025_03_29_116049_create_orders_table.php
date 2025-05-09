@@ -31,7 +31,7 @@ return new class extends Migration
             $table->enum('engin', ['Moto', 'Moto Taxi', 'Camion', 'Tricycle']);
             $table->enum('type_course', ['Course', 'Livraison', 'Expédition']);
             $table->enum('status_orders', ['En attente', 'Assignée', 'Acceptée', 'En cours', 'Arrivée', 'Terminée', 'Annulée', 'Échouée']);
-            $table->enum('status_payment', ['Non payé', 'Payé']);
+            $table->enum('status_payment', ['Non payé', 'En attente', 'Payé']);
             $table->enum('mode_payment', ['Espèces', 'Mobile Money', 'Carte Bancaire']);
             $table->string('transaction_id')->nullable();
             $table->timestamp('date_paiement')->nullable();
@@ -41,6 +41,9 @@ return new class extends Migration
             $table->foreignId('admin_id')->nullable()->constrained('users')->onDelete('set null');
             $table->tinyInteger('notation')->nullable();
             $table->json('historique_statut')->nullable();
+            $table->string('qr_code_path')->nullable(); 
+            $table->string('payment_reference')->nullable();
+            $table->integer('code')->nullable();
             $table->timestamps();
         });
         
