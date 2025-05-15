@@ -17,7 +17,6 @@ class LivreurController extends Controller
     public function demandeLivreur(Request $request)
     {
         Log::info('Received demande livreur request', $request->all());
-
         try {
             $validated = $request->validate([
                 'nom' => 'required|string|max:255',
@@ -32,12 +31,27 @@ class LivreurController extends Controller
             $demande = DemandeLivreur::create($validated);
 
             // Upload de l'image si elle existe
+            // if ($request->hasFile('image')) {
+            //     $file = $request->file('image');
+            //     $fileName = $demande->id . '.' . $file->getClientOriginalExtension();
+            //     $path = $file->storeAs('public/demandes', $fileName);
+                
+            //     // Mettre à jour le chemin de l'image dans la base de données
+            //     $demande->update([
+            //         'image' => 'demandes/' . $fileName,
+            //     ]);
+            // }
+
             if ($request->hasFile('image')) {
+                Log::info('Image détectée : ' . $request->file('image')->getClientOriginalName());
+            
                 $file = $request->file('image');
                 $fileName = $demande->id . '.' . $file->getClientOriginalExtension();
                 $path = $file->storeAs('public/demandes', $fileName);
-                
-                // Mettre à jour le chemin de l'image dans la base de données
+            
+                Log::info('Image stockée à : ' . $path);
+            
+                // Mettre à jour la base de données
                 $demande->update([
                     'image' => 'demandes/' . $fileName,
                 ]);
@@ -305,15 +319,12 @@ class LivreurController extends Controller
 
     public function getOrdersByStatus(Request $request)
     {
-        Log::info("[OrderController] Début getOrdersByStatus", ['status_reçue' => $request->query('status')]);
     
         try {
             $user = $request->user();
-            Log::info("[OrderController] Utilisateur authentifié", ['user_id' => $user->id]);
     
             $livreur = $user->livreur;
             if (!$livreur) {
-                Log::warning("[OrderController] Livreur non trouvé pour l'utilisateur", ['user_id' => $user->id]);
                 return response()->json(['error' => 'Livreur non trouvé'], 404);
             }
     
@@ -328,32 +339,26 @@ class LivreurController extends Controller
             
     
             if (!array_key_exists($status, $statusMapping)) {
-                Log::warning("[OrderController] Statut invalide reçu", ['status' => $status]);
                 return response()->json(['error' => 'Statut invalide'], 400);
             }
-    
-            Log::info("[OrderController] Statut valide", ['status' => $status, 'mapping' => $statusMapping[$status]]);
-    
+        
             $query = Order::with(['user'])
                 ->where('livreur_id', $livreur->id);
     
             if ($status === 'in_progress') {
                 $query->whereIn('status_orders', $statusMapping[$status]);
-                Log::info("[OrderController] Recherche de commandes avec plusieurs statuts", ['statuts' => $statusMapping[$status]]);
             } else {
                 $query->where('status_orders', $statusMapping[$status]);
-                Log::info("[OrderController] Recherche de commandes avec un seul statut", ['statut' => $statusMapping[$status]]);
             }
     
             $orders = $query->orderBy('created_at', 'desc')->get();
-    
-            Log::info("[OrderController] Nombre de commandes récupérées", ['nombre' => $orders->count()]);
-    
+        
             $ordersMapped = $orders->map(function ($order) {
                 return [
                     'id' => $order->id,
-                    'client_name' => $order->user->name ?? 'Client inconnu',
+                    'client_name' => $order->user->name ?? '',
                     'client_phone' => $order->user->phone ?? $order->numero_destinateur,
+                    'client_image' => $order->user->image ,
                     'depart_adresse' => $order->depart_adresse,
                     'destination_adresse' => $order->destination_adresse,
                     'depart_latitude' => $order->depart_lat ?? null,
@@ -363,14 +368,40 @@ class LivreurController extends Controller
                     'montant' => $order->montant,
                     'status_orders' => $order->status_orders,
                     'created_at' => $order->created_at->format('Y-m-d H:i:s'),
-                    'rating' => $order->rating ?? 0,
-                    //'total_ratings' => $order->user->ratings()->count() ?? 0,
                     'numero_destinateur' => $order->numero_destinateur,
+                    'distance_km' => $order->distance_km ?? 0,
+                    'qr_code_path' => $order->qr_code_path ?? null,
                 ];
             });
-    
-            Log::info("[OrderController] Fin de traitement getOrdersByStatus");
-    
+
+            foreach ($ordersMapped as $order) {
+            Log::info("Commande récupérée : ", [
+                'id' => $order['id'],
+                'client_name' => $order['client_name'],
+                'client_phone' => $order['client_phone'],
+                'client_image' => $order['client_image'],
+                'depart_adresse' => $order['depart_adresse'],
+                'destination_adresse' => $order['destination_adresse'],
+                'depart_latitude' => $order['depart_latitude'],
+                'depart_longitude' => $order['depart_longitude'],
+                'destination_latitude' => $order['destination_latitude'],
+                'destination_longitude' => $order['destination_longitude'],
+                'montant' => $order['montant'],
+                'status_orders' => $order['status_orders'],
+                'created_at' => $order['created_at'],
+                'numero_destinateur' => $order['numero_destinateur'],
+                'distance_km' => $order['distance_km'],
+            ]);
+        }
+           
+        if ($ordersMapped->isEmpty()) {
+    return response()->json([
+        'success' => true,
+        'message' => 'Aucune commande trouvée',
+        'data' => []
+    ]);
+}
+        
             return response()->json([
                 'success' => true,
                 'data' => $ordersMapped

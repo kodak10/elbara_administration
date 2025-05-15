@@ -295,27 +295,34 @@ class OrderController extends Controller
      * Récupérer les commandes d'un utilisateur
      */
     public function getUserOrders(Request $request, $user_id)
-    {
-        try {
-            $limit = $request->input('limit', 5);
-            $orders = Order::where('user_id', $user_id)
-                ->orderBy('date', 'desc')
-                ->take($limit)
-                ->get()
-                ->map(function ($order) {
-                    return $this->formatOrder($order);
-                });
+{
+    try {
+        $limit = $request->input('limit', 5);
+        $orders = Order::where('user_id', $user_id)
+            ->orderBy('date', 'desc')
+            ->take($limit)
+            ->get()
+            ->map(function ($order) {
+                return $this->formatOrder($order);
+            });
 
-            return response()->json($orders);
-
-        } catch (\Exception $e) {
-            Log::error('Erreur getOrders: '.$e->getMessage());
+        if ($orders->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la récupération des commandes'
-            ], 500);
+                'message' => 'Aucune commande trouvée'
+            ], 404);
         }
+
+        return response()->json($orders);
+
+    } catch (\Exception $e) {
+        Log::error('Erreur getOrders: '.$e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Erreur lors de la récupération des commandes'
+        ], 500);
     }
+}
 
     /**
      * Récupérer les détails d'une commande par référence
