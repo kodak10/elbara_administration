@@ -228,7 +228,7 @@ public function resendOtp(Request $request)
         $phone = '225' . $request->phone;
         
         // Cas spécial pour le numéro de test
-        if ($phone === '2250103810998') {
+        if ($phone === '2250101010101') {
             $otp = '123456'; // OTP fixe pour le numéro de test
             $expiresAt = now()->addMinutes(10);
             
