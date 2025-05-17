@@ -60,7 +60,7 @@
 
                         <hr>
 
-                        @if($order->historique_statut)
+                        {{-- @if($order->historique_statut)
                             <h5>Historique des Statuts</h5>
                             <ul>
                                 @foreach(json_decode($order->historique_statut) as $statut)
@@ -71,7 +71,7 @@
                                     @endif
                                 @endforeach
                             </ul>
-                        @endif
+                        @endif --}}
 
                         @if($order->livreur_id)
                         

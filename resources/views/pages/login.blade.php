@@ -61,7 +61,7 @@
                       </span> --}}
                   </label>
                   <div class="input-group input-group-flat">
-                      <input type="password" value="Elbara2025" name="password" class="form-control" placeholder="Mot de passe" required autocomplete="current-password">
+                      <input type="password" name="password" class="form-control" placeholder="Mot de passe" required autocomplete="current-password">
                       @error('password')
                           <div class="text-danger">{{ $message }}</div>
                       @enderror
