@@ -16,6 +16,29 @@
 
 <div class="page-body">
     <div class="container-xl">
+        <!-- Afficher les messages de succès/erreur -->
+        @if(session('success'))
+            <div class="alert alert-success">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger">
+                {{ session('error') }}
+            </div>
+        @endif
+
+        <!-- Afficher les erreurs de validation -->
+        @if($errors->any())
+            <div class="alert alert-danger">
+                <ul>
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div class="card">
             <div class="card-body p-0">
                 <div id="table-default" class="table-responsive">
