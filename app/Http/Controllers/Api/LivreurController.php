@@ -30,32 +30,22 @@ class LivreurController extends Controller
             // Créer la demande sans l'image
             $demande = DemandeLivreur::create($validated);
 
-            // Upload de l'image si elle existe
+            
+
             // if ($request->hasFile('image')) {
+            //     Log::info('Image détectée : ' . $request->file('image')->getClientOriginalName());
+            
             //     $file = $request->file('image');
             //     $fileName = $demande->id . '.' . $file->getClientOriginalExtension();
             //     $path = $file->storeAs('public/demandes', $fileName);
-                
-            //     // Mettre à jour le chemin de l'image dans la base de données
+            
+            //     Log::info('Image stockée à : ' . $path);
+            
+            //     // Mettre à jour la base de données
             //     $demande->update([
             //         'image' => 'demandes/' . $fileName,
             //     ]);
             // }
-
-            if ($request->hasFile('image')) {
-                Log::info('Image détectée : ' . $request->file('image')->getClientOriginalName());
-            
-                $file = $request->file('image');
-                $fileName = $demande->id . '.' . $file->getClientOriginalExtension();
-                $path = $file->storeAs('public/demandes', $fileName);
-            
-                Log::info('Image stockée à : ' . $path);
-            
-                // Mettre à jour la base de données
-                $demande->update([
-                    'image' => 'demandes/' . $fileName,
-                ]);
-            }
             
             
 
