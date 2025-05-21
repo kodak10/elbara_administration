@@ -55,7 +55,7 @@ class LivreurController extends Controller
                 'success' => true,
                 'message' => 'Demande enregistrée avec succès',
                 'data' => $demande
-            ], 201);
+            ], 200);
 
         } catch (\Exception $e) {
             Log::error('Error creating demande: ' . $e->getMessage());
