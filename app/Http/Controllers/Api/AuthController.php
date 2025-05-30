@@ -150,7 +150,152 @@ private function normalizePhoneNumber($phone)
 
   
 
-    public function sendOtp(Request $request)
+//     public function sendOtp(Request $request)
+// {
+//     $validator = Validator::make($request->all(), [
+//         'phone' => 'required|string|max:10',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Numéro invalide',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         $phone = '225' . $request->phone;
+        
+//         // OTP fixe pour le numéro de test
+//         $otp = ($phone === '2250101010101') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        
+//         Log::channel('sms')->info('Envoi OTP initié', [
+//             'phone' => $phone,
+//             'otp' => $otp,
+//             'is_test_number' => ($phone === '2250101010101')
+//         ]);
+
+//         OtpCode::updateOrCreate(
+//             ['phone_number' => $phone],
+//             ['code' => $otp, 'expires_at' => now()->addMinutes(10)]
+//         );
+
+//         // Ne pas envoyer de SMS pour le numéro de test
+//         if ($phone !== '2250101010101') {
+//             $message = "Code: $otp";
+//             $smsResult = $this->sendSms($phone, $message);
+            
+//             if (!$smsResult['success']) {
+//                 throw new \Exception($smsResult['message']);
+//             }
+//         }
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => $phone === '2250101010101' ? 'Code de test généré' : 'Code envoyé',
+//             'otp' => $otp
+//         ]);
+
+//     } catch (\Exception $e) {
+//         Log::channel('sms')->error('Erreur OTP', [
+//             'phone' => $this->normalizePhoneNumber($request->phone),
+//             'error' => $e->getMessage()
+//         ]);
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Erreur envoi'
+//         ], 500);
+//     }
+// }
+
+
+// public function resendOtp(Request $request)
+// {
+//     $validator = Validator::make($request->all(), [
+//         'phone' => 'required|string|max:10',
+//     ]);
+
+//     if ($validator->fails()) {
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Numéro invalide',
+//             'errors' => $validator->errors()
+//         ], 422);
+//     }
+
+//     try {
+//         $phone = '225' . $request->phone;
+        
+//         // Cas spécial pour le numéro de test
+//         if ($phone === '2250101010101') {
+//             $otp = '123456'; // OTP fixe pour le numéro de test
+//             $expiresAt = now()->addMinutes(10);
+            
+//             Log::channel('sms')->info('Renvoi OTP test', [
+//                 'phone' => $phone,
+//                 'action' => 'otp_fixe_envoye'
+//             ]);
+            
+//             OtpCode::updateOrCreate(
+//                 ['phone_number' => $phone],
+//                 ['code' => $otp, 'expires_at' => $expiresAt, 'verified' => false]
+//             );
+            
+//             return response()->json([
+//                 'success' => true,
+//                 'message' => 'Code de test régénéré',
+//                 'otp' => $otp // Retourné uniquement en développement
+//             ]);
+//         }
+
+//         // Comportement normal pour les autres numéros
+//         $existingOtp = OtpCode::where('phone_number', $phone)
+//                             ->where('expires_at', '>', now())
+//                             ->first();
+
+//         if ($existingOtp) {
+//             $otp = $existingOtp->code;
+//             $expiresAt = $existingOtp->expires_at;
+//             Log::channel('laravel')->debug('OTP existant réutilisé', ['phone' => $phone]);
+//         } else {
+//             $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+//             $expiresAt = now()->addMinutes(10);
+            
+//             OtpCode::updateOrCreate(
+//                 ['phone_number' => $phone],
+//                 ['code' => $otp, 'expires_at' => $expiresAt, 'verified' => false]
+//             );
+//             Log::channel('sms')->debug('Nouvel OTP généré', ['phone' => $phone]);
+//         }
+
+//         // Envoi SMS uniquement pour les numéros non-test
+//         $message = "Code: $otp";
+//         $smsResult = $this->sendSms($phone, $message);
+
+//         if (!$smsResult['success']) {
+//             throw new \Exception($smsResult['message']);
+//         }
+
+//         return response()->json([
+//             'success' => true,
+//             'message' => 'Code renvoyé',
+//             'expires_in' => now()->diffInSeconds($expiresAt)
+//         ]);
+
+//     } catch (\Exception $e) {
+//         Log::channel('sms')->error('Erreur renvoi OTP', [
+//             'phone' => $request->phone,
+//             'error' => $e->getMessage()
+//         ]);
+//         return response()->json([
+//             'success' => false,
+//             'message' => 'Erreur lors du renvoi'
+//         ], 500);
+//     }
+// }
+
+public function sendOtp(Request $request)
 {
     $validator = Validator::make($request->all(), [
         'phone' => 'required|string|max:10',
@@ -166,14 +311,16 @@ private function normalizePhoneNumber($phone)
 
     try {
         $phone = '225' . $request->phone;
+        $isProduction = config('app.env') === 'production'; // Variable déterminant l'environnement
         
-        // OTP fixe pour le numéro de test
-        $otp = ($phone === '2250101010101') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // OTP fixe pour l'environnement de test OU pour le numéro de test spécifique
+        $otp = (!$isProduction || $phone === '2250101010101') ? '123456' : str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
         
         Log::channel('sms')->info('Envoi OTP initié', [
             'phone' => $phone,
             'otp' => $otp,
-            'is_test_number' => ($phone === '2250101010101')
+            'is_test_number' => ($phone === '2250101010101'),
+            'environment' => config('app.env')
         ]);
 
         OtpCode::updateOrCreate(
@@ -181,8 +328,8 @@ private function normalizePhoneNumber($phone)
             ['code' => $otp, 'expires_at' => now()->addMinutes(10)]
         );
 
-        // Ne pas envoyer de SMS pour le numéro de test
-        if ($phone !== '2250101010101') {
+        // Ne pas envoyer de SMS en environnement de test ou pour le numéro de test spécifique
+        if ($isProduction && $phone !== '2250101010101') {
             $message = "Code: $otp";
             $smsResult = $this->sendSms($phone, $message);
             
@@ -193,7 +340,7 @@ private function normalizePhoneNumber($phone)
 
         return response()->json([
             'success' => true,
-            'message' => $phone === '2250101010101' ? 'Code de test généré' : 'Code envoyé',
+            'message' => (!$isProduction || $phone === '2250101010101') ? 'Code de test généré' : 'Code envoyé',
             'otp' => $otp
         ]);
 
@@ -208,7 +355,6 @@ private function normalizePhoneNumber($phone)
         ], 500);
     }
 }
-
 
 public function resendOtp(Request $request)
 {
@@ -226,15 +372,17 @@ public function resendOtp(Request $request)
 
     try {
         $phone = '225' . $request->phone;
+        $isProduction = config('app.env') === 'production'; // Variable déterminant l'environnement
         
-        // Cas spécial pour le numéro de test
-        if ($phone === '2250101010101') {
-            $otp = '123456'; // OTP fixe pour le numéro de test
+        // Cas spécial pour l'environnement de test ou le numéro de test
+        if (!$isProduction || $phone === '2250101010101') {
+            $otp = '123456'; // OTP fixe pour le test
             $expiresAt = now()->addMinutes(10);
             
             Log::channel('sms')->info('Renvoi OTP test', [
                 'phone' => $phone,
-                'action' => 'otp_fixe_envoye'
+                'action' => 'otp_fixe_envoye',
+                'environment' => config('app.env')
             ]);
             
             OtpCode::updateOrCreate(
@@ -245,11 +393,11 @@ public function resendOtp(Request $request)
             return response()->json([
                 'success' => true,
                 'message' => 'Code de test régénéré',
-                'otp' => $otp // Retourné uniquement en développement
+                'otp' => $otp
             ]);
         }
 
-        // Comportement normal pour les autres numéros
+        // Comportement normal pour la production
         $existingOtp = OtpCode::where('phone_number', $phone)
                             ->where('expires_at', '>', now())
                             ->first();
@@ -257,7 +405,7 @@ public function resendOtp(Request $request)
         if ($existingOtp) {
             $otp = $existingOtp->code;
             $expiresAt = $existingOtp->expires_at;
-            Log::channel('sms')->debug('OTP existant réutilisé', ['phone' => $phone]);
+            Log::channel('laravel')->debug('OTP existant réutilisé', ['phone' => $phone]);
         } else {
             $otp = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
             $expiresAt = now()->addMinutes(10);
@@ -269,7 +417,7 @@ public function resendOtp(Request $request)
             Log::channel('sms')->debug('Nouvel OTP généré', ['phone' => $phone]);
         }
 
-        // Envoi SMS uniquement pour les numéros non-test
+        // Envoi SMS uniquement en production
         $message = "Code: $otp";
         $smsResult = $this->sendSms($phone, $message);
 
