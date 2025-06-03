@@ -23,7 +23,7 @@ class AuthController extends Controller
 {
     $apiKey = 'paoFFVLaaLRmSPXmVKPHmSFPA8LGVPjg';
     $apiToken = 'KiuI1743759041';
-    $senderId = 'ELBARA';
+    $senderId = 'OTP Auth';
 
     $url = "https://panel.smsing.app/smsAPI?sendsms" .
            "&apikey=" . urlencode($apiKey) .
